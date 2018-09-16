@@ -2,11 +2,11 @@
 MapperJ is a annotation processing library which helps you get rid of manual creating of mapper classes and a little bit more.
 
 I hope everybody uses Clean Architecture approaches for creating theirs Android projects now.
-Who uses this approaches needs to write boring mapper classes (different way of MapStruct) which transfer data between layers such as:
+Who uses this approaches needs to write boring mapper classes which transfer data between layers such as:
 - db source (Entities models to Domain models and back)
 - net source (Responses models to Domain models)
 
-So this annotation processing code helps you get rid of such works.
+So this annotation processing code helps you get rid of such works (different way of MapStruct).
 
 Usage:
 
