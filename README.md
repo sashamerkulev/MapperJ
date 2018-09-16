@@ -218,5 +218,5 @@ public class BundleModelArgs {
 }
 
 ```
-As you can see this class will help you to transfer data to Intent or Bundle and back which is convinient way for transfer arguments to fragments, activities and etc.
+As you can see this class will help you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
 
