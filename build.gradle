@@ -27,11 +27,3 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-task superSimpleJar(type: Jar) {
-    baseName = 'sample/libs/mapperj'
-    from {
-        zipTree('annotations/build/libs/annotations.jar')
-                .plus('processors/build/libs/processors.jar')
-    }
-}
