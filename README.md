@@ -5,6 +5,7 @@ I hope everybody uses Clean Architecture approaches for creating theirs Android 
 Who uses this approaches needs to write boring mapper classes which transfer data between layers such as:
 - db source (Entities models to Domain models and back)
 - net source (Responses models to Domain models)
+- domain (Domain models to UI models)
 
 So this annotation processing code helps you get rid of such works (different way of MapStruct).
 
