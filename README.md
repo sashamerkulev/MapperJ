@@ -65,7 +65,7 @@ As you can see I used the following annnotation:
 @MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class]) 
 ```
 
-and there is a generated code which i mentioned before:
+and there is a generated code which I mentioned before:
 ``` kotlin
 public class DomainModel1Mapper {
 
@@ -218,5 +218,5 @@ public class BundleModelArgs {
 }
 
 ```
-As you can see this class will help you transfer data to Intent or Bundle and back which is convinient way for transfer arguments to fragments, activities and etc.
+As you can see this class will help you to transfer data to Intent or Bundle and back which is convinient way for transfer arguments to fragments, activities and etc.
 
