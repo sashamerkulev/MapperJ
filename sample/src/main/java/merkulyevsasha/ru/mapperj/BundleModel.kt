@@ -1,8 +1,8 @@
 package merkulyevsasha.ru.mapperj
 
-import merkulyevsasha.ru.annotations.args.Args
+import merkulyevsasha.ru.annotations.ArgsJ
 
-@Args
+@ArgsJ
 data class BundleModel(
         val id: Int,
         val name: String,

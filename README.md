@@ -93,7 +93,7 @@ public class DomainModel1Mapper {
 
 And little bonus here:
 ``` kotlin
-@Args
+@ArgsJ
 data class BundleModel(
         val id: Int,
         val name: String,

@@ -21,7 +21,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import merkulyevsasha.ru.annotations.args.Args;
+import merkulyevsasha.ru.annotations.ArgsJ;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -32,7 +32,7 @@ public class ArgsJProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(Args.class);
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(ArgsJ.class);
         for (Element element : elements) {
             if (element.getKind() != ElementKind.CLASS) continue;
             TypeElement typeElement = (TypeElement) element;
@@ -191,7 +191,7 @@ public class ArgsJProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> result = new HashSet<>();
-        result.add(Args.class.getCanonicalName());
+        result.add(ArgsJ.class.getCanonicalName());
         return result;
     }
 

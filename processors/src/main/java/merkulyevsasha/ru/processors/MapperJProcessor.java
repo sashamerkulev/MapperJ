@@ -42,7 +42,7 @@ import javax.lang.model.util.AbstractElementVisitor6;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import merkulyevsasha.ru.annotations.mapper.MapperJ;
+import merkulyevsasha.ru.annotations.MapperJ;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)

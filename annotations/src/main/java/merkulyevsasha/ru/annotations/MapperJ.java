@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.annotations.mapper;
+package merkulyevsasha.ru.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,6 +1,6 @@
 package merkulyevsasha.ru.mapperj
 
-import merkulyevsasha.ru.annotations.mapper.MapperJ
+import merkulyevsasha.ru.annotations.MapperJ
 
 @MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
 data class DomainModel1(
