@@ -24,11 +24,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    compileOnly project(path: ':annotations')
-    kapt project(':processors')
+//    compileOnly project(path: ':annotations')
+//    kapt project(':processors')
 
-//    kapt files('libs/processors.jar')
-//    annotationProcessor files('libs/processors.jar')
+    kapt files('libs/mapperjp.jar')
+    annotationProcessor files('libs/mapperjp.jar')
 
     implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
