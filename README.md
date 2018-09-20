@@ -104,7 +104,9 @@ public class DomainModel1Mapper {
 
 ```
 
-And little bonus here - this annotation generates you a class which helps you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
+# ArgsJ
+
+ArgsJ annotation generates you a class which helps you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
 
 ## Usage
 
