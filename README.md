@@ -1,6 +1,6 @@
 
 # MapperJ
-MapperJ is a annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
+MapperJ is an annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
 
 I hope everybody uses Clean Architecture approaches for creating theirs Android projects now.
 Who uses this approaches needs to write boring mapper classes which transfer data between layers such as:
@@ -106,7 +106,7 @@ public class DomainModel1Mapper {
 
 # ArgsJ
 
-ArgsJ annotation generates you a class which helps you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
+ArgsJ is an annotation generates you a class helps you to transfer data to Intent or Bundle and back which is comfortable way for transfering arguments to fragments, activities and etc.
 
 ## Usage
 
