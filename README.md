@@ -1,3 +1,4 @@
+
 # MapperJ
 MapperJ is a annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
 
@@ -9,7 +10,18 @@ Who uses this approaches needs to write boring mapper classes which transfer dat
 
 So this annotation processing code helps you get rid of such works (different way of MapStruct).
 
-Usage:
+## Installation
+
+Add to the `build.gradle` of your app module:
+```Groovy
+dependencies {
+    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.0'
+    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.0'
+    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.0'
+}
+```
+
+## Usage
 
 ``` kotlin
 @MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
@@ -92,7 +104,10 @@ public class DomainModel1Mapper {
 
 ```
 
-And little bonus here:
+And little bonus here - this annotation generates you a class which helps you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
+
+## Usage
+
 ``` kotlin
 @ArgsJ
 data class BundleModel(
@@ -219,7 +234,6 @@ public class BundleModelArgs {
 }
 
 ```
-As you can see this class will help you to transfer data to Intent or Bundle and back which is convinient way for transfering arguments to fragments, activities and etc.
 
 
 License
