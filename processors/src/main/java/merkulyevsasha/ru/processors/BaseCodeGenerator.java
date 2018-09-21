@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 import merkulyevsasha.ru.annotations.Source;
 
@@ -21,7 +21,7 @@ public class BaseCodeGenerator {
         generatedSourcesRoot = processingEnv.getOptions().get(KAPT_KOTLIN_GENERATED_OPTION_NAME);
     }
 
-    protected LinkedHashMap<String, Element> getTypeElementFields(TypeElement type) {
+    protected LinkedHashMap<String, Element> getTypeElementFields(Element type) {
         LinkedHashMap<String, Element> typeElements = new LinkedHashMap<>();
         for (Element element : type.getEnclosedElements()) {
             if (element.getKind() != ElementKind.FIELD) continue;

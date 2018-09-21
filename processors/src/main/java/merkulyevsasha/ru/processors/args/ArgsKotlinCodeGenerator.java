@@ -32,7 +32,6 @@ public class ArgsKotlinCodeGenerator extends BaseCodeGenerator implements CodeGe
         try {
             generateClass(packageName, typeElement);
         } catch (IOException e) {
-            e.printStackTrace();
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
         }
     }
