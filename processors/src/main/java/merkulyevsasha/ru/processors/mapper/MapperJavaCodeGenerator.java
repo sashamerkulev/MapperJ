@@ -5,47 +5,27 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import merkulyevsasha.ru.annotations.Mapper;
-import merkulyevsasha.ru.processors.CodeGenerator;
+public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
 
-public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements CodeGenerator {
     public MapperJavaCodeGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
     }
 
     @Override
-    public void generate(String packageName, TypeElement typeElement) {
-        try {
-            Mapper mapper = typeElement.getAnnotation(Mapper.class);
-            List<TypeMirror> mapOneWayMirrors = getOneWayMapTypeMirrors(mapper);
-            List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
-
-            additionalMaps.clear();
-            generateClass(packageName, typeElement, convertTypeMirrorsToTypeElements(mapOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors));
-        } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        }
-    }
-
-    @Override
     protected void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
         String className = typeElement.getSimpleName().toString();
-        String builderSimpleClassName = className + "Mapper";
+        String mapperClassName = className + "Mapper";
         JavaFileObject builderFile;
         try {
             builderFile = processingEnv.getFiler()
-                .createSourceFile(builderSimpleClassName);
+                .createSourceFile(mapperClassName);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -63,7 +43,7 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
             out.println("import java.util.ArrayList;");
             out.println();
 
-            out.println("public class " + builderSimpleClassName + " {");
+            out.println("public class " + mapperClassName + " {");
             out.println();
 
             List<TypeElement> mapElements = new ArrayList<>();
@@ -117,73 +97,43 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
         }
     }
 
+    @Override
+    protected String getDefaultValueForType(TypeMirror typeMirror) {
+        String typeName = typeMirror.toString().toLowerCase();
 
-    private String getConstructorParameter(LinkedHashMap<String, Element> mainElements, LinkedHashMap<String, Element> childElements) {
-        StringBuilder sb = new StringBuilder();
+        boolean isList = typeName.contains("list");
 
-        for (Map.Entry<String, Element> entry : mainElements.entrySet()) {
-
-            Element mainElement = entry.getValue();
-            String key = mainElement.getSimpleName().toString();
-
-            if (sb.length() > 0) sb.append(", ");
-
-            if (childElements.containsKey(key)) {
-
-                Element childElement = childElements.get(key);
-
-                Object mainElementType = acceptMirrorType(mainElement.asType());
-                Object childElementType = acceptMirrorType(childElement.asType());
-
-                if (mainElementType instanceof PrimitiveType || mainElement.asType().toString().contains("String")) {
-                    sb.append("item.").append(getGetterByFieldName(mainElement.getSimpleName().toString()));
-                } else {
-
-                    DeclaredType mainDeclaredType = (DeclaredType) mainElementType;
-                    DeclaredType childDeclaredType = (DeclaredType) childElementType;
-
-                    Boolean isList = false;
-                    String methodName = "mapTo" + getClassName(mainElement.asType().toString());
-                    if (mainDeclaredType.toString().toLowerCase().contains("list")) {
-                        methodName = methodName + "s";
-
-                        TypeMirror mainArg = mainDeclaredType.getTypeArguments().get(0);
-                        TypeMirror childArg = childDeclaredType.getTypeArguments().get(0);
-
-                        Object mainListElementType = acceptMirrorType(mainArg);
-                        Object childListElementType = acceptMirrorType(childArg);
-
-                        mainDeclaredType = (DeclaredType) mainListElementType;
-                        childDeclaredType = (DeclaredType) childListElementType;
-                        isList = true;
-                    }
-
-                    sb.append(methodName).append("(item.").append(getGetterByFieldName(key)).append(")");
-
-                    additionalMaps.add(new MapChildInfo(
-                        mainDeclaredType.asElement(),
-                        getClassName(mainElement.asType().toString()),
-                        childDeclaredType.asElement(),
-                        getClassName(childElement.asType().toString()),
-                        methodName,
-                        isList));
-                }
-
-            } else {
-                sb.append(getDefaultValueForType(mainElement.asType()));
+        if (isList) {
+            return "new ArrayList()";
+        } else {
+            switch (typeName) {
+                case "int":
+                    return "0";
+                case "long":
+                    return "0";
+                case "boolean":
+                    return "false";
+                case "float":
+                    return "0F";
+                case "double":
+                    return "0.0";
+                case "short":
+                    return "(short) 0";
+                case "byte":
+                    return "(byte) 0";
+                case "java.lang.string":
+                    return "\"\"";
+                default:
+                    return "null";
+                //throw new IllegalArgumentException(typeName);
             }
         }
-        return sb.toString();
     }
 
-    private String getGetterByFieldName(String fieldName) {
+    @Override
+    protected String getGetterByFieldName(String fieldName) {
         String firstUpper = fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
         return "get" + firstUpper + "()";
-    }
-
-    private String getClassName(String elementTypeName) {
-        int lastDot = elementTypeName.lastIndexOf(".");
-        return elementTypeName.substring(lastDot + 1).replace(">", "");
     }
 
 }

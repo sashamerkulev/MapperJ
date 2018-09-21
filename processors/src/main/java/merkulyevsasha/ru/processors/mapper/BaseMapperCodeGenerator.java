@@ -2,7 +2,9 @@ package merkulyevsasha.ru.processors.mapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -61,78 +63,74 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
 
     protected abstract void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException;
 
-    List<TypeMirror> getOneWayMapTypeMirrors(Mapper mapper) {
-        List<TypeMirror> typeMirrors = new ArrayList<>();
-        try {
-            for (Class<?> clazz : mapper.oneWayMapClasses()) {
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
-            }
-        } catch (MirroredTypesException mte) {
-            typeMirrors.addAll(mte.getTypeMirrors());
-        }
-        return typeMirrors;
-    }
+    protected abstract String getDefaultValueForType(TypeMirror typeMirror);
 
-    List<TypeMirror> getTwoWayMapTypeMirrors(Mapper mapper) {
-        List<TypeMirror> typeMirrors = new ArrayList<>();
-        try {
-            for (Class<?> clazz : mapper.twoWayMapClasses()) {
-                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
-            }
-        } catch (MirroredTypesException mte) {
-            typeMirrors.addAll(mte.getTypeMirrors());
-        }
-        return typeMirrors;
-    }
+    String getConstructorParameter(LinkedHashMap<String, Element> mainElements, LinkedHashMap<String, Element> childElements) {
+        StringBuilder sb = new StringBuilder();
 
-    List<TypeElement> convertTypeMirrorsToTypeElements(List<TypeMirror> typeMirrors) {
-        List<TypeElement> typeElements = new ArrayList<>();
-        for (TypeMirror tm : typeMirrors) {
-            Object mirrorType = acceptMirrorType(tm);
-            DeclaredType declaredTpe = (DeclaredType) mirrorType;
+        for (Map.Entry<String, Element> entry : mainElements.entrySet()) {
 
-            Element element = declaredTpe.asElement();
-            Object abstractElement = acceptElement(element);
+            Element mainElement = entry.getValue();
+            String key = mainElement.getSimpleName().toString();
 
-            TypeElement typeElement = (TypeElement) abstractElement;
-            typeElements.add(typeElement);
-        }
-        return typeElements;
-    }
+            if (sb.length() > 0) sb.append(", ");
 
-    String getDefaultValueForType(TypeMirror typeMirror) {
-        String typeName = typeMirror.toString().toLowerCase();
+            if (childElements.containsKey(key)) {
 
-        boolean isList = typeName.contains("list");
+                Element childElement = childElements.get(key);
 
-        if (isList) {
-            return "new ArrayList()";
-        } else {
-            switch (typeName) {
-                case "int":
-                    return "0";
-                case "long":
-                    return "0";
-                case "boolean":
-                    return "false";
-                case "float":
-                    return "0F";
-                case "double":
-                    return "0.0";
-                case "short":
-                    return "(short) 0";
-                case "byte":
-                    return "(byte) 0";
-                case "java.lang.string":
-                    return "\"\"";
-                default:
-                    return "null";
-                //throw new IllegalArgumentException(typeName);
+                Object mainElementType = acceptMirrorType(mainElement.asType());
+                Object childElementType = acceptMirrorType(childElement.asType());
+
+                if (mainElementType instanceof PrimitiveType || mainElement.asType().toString().contains("String")) {
+                    sb.append("item.").append(getGetterByFieldName(mainElement.getSimpleName().toString()));
+                } else {
+
+                    DeclaredType mainDeclaredType = (DeclaredType) mainElementType;
+                    DeclaredType childDeclaredType = (DeclaredType) childElementType;
+
+                    Boolean isList = false;
+                    String methodName = "mapTo" + getClassName(mainElement.asType().toString());
+                    if (mainDeclaredType.toString().toLowerCase().contains("list")) {
+                        methodName = methodName + "s";
+
+                        TypeMirror mainArg = mainDeclaredType.getTypeArguments().get(0);
+                        TypeMirror childArg = childDeclaredType.getTypeArguments().get(0);
+
+                        Object mainListElementType = acceptMirrorType(mainArg);
+                        Object childListElementType = acceptMirrorType(childArg);
+
+                        mainDeclaredType = (DeclaredType) mainListElementType;
+                        childDeclaredType = (DeclaredType) childListElementType;
+                        isList = true;
+                    }
+
+                    sb.append(methodName).append("(item.").append(getGetterByFieldName(key)).append(")");
+
+                    additionalMaps.add(new MapChildInfo(
+                        mainDeclaredType.asElement(),
+                        getClassName(mainElement.asType().toString()),
+                        childDeclaredType.asElement(),
+                        getClassName(childElement.asType().toString()),
+                        methodName,
+                        isList));
+                }
+
+            } else {
+                sb.append(getDefaultValueForType(mainElement.asType()));
             }
         }
+        return sb.toString();
     }
 
-    Object acceptMirrorType(TypeMirror typeMirror) {
+    abstract protected String getGetterByFieldName(String fieldName);
+
+    private String getClassName(String elementTypeName) {
+        int lastDot = elementTypeName.lastIndexOf(".");
+        return elementTypeName.substring(lastDot + 1).replace(">", "");
+    }
+
+    private Object acceptMirrorType(TypeMirror typeMirror) {
         return typeMirror.accept(new TypeVisitor<Object, TypeMirror>() {
             @Override
             public Object visit(TypeMirror typeMirror, TypeMirror typeMirror2) {
@@ -233,6 +231,45 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
                 return null;
             }
         }, element);
+    }
+
+    private List<TypeMirror> getOneWayMapTypeMirrors(Mapper mapper) {
+        List<TypeMirror> typeMirrors = new ArrayList<>();
+        try {
+            for (Class<?> clazz : mapper.oneWayMapClasses()) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
+            }
+        } catch (MirroredTypesException mte) {
+            typeMirrors.addAll(mte.getTypeMirrors());
+        }
+        return typeMirrors;
+    }
+
+    private List<TypeMirror> getTwoWayMapTypeMirrors(Mapper mapper) {
+        List<TypeMirror> typeMirrors = new ArrayList<>();
+        try {
+            for (Class<?> clazz : mapper.twoWayMapClasses()) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
+            }
+        } catch (MirroredTypesException mte) {
+            typeMirrors.addAll(mte.getTypeMirrors());
+        }
+        return typeMirrors;
+    }
+
+    private List<TypeElement> convertTypeMirrorsToTypeElements(List<TypeMirror> typeMirrors) {
+        List<TypeElement> typeElements = new ArrayList<>();
+        for (TypeMirror tm : typeMirrors) {
+            Object mirrorType = acceptMirrorType(tm);
+            DeclaredType declaredTpe = (DeclaredType) mirrorType;
+
+            Element element = declaredTpe.asElement();
+            Object abstractElement = acceptElement(element);
+
+            TypeElement typeElement = (TypeElement) abstractElement;
+            typeElements.add(typeElement);
+        }
+        return typeElements;
     }
 
 }
