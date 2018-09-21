@@ -33,7 +33,7 @@ public class ArgsProcessor extends AbstractProcessor {
             TypeElement typeElement = (TypeElement) element;
             Args args = typeElement.getAnnotation(Args.class);
             CodeGenerator processor = CodeGeneratorFactory.createArgsGenerator(args.source(), processingEnv);
-            processor.generate(typeElement, processingEnv.getElementUtils().getPackageOf(typeElement).toString());
+            processor.generate(processingEnv.getElementUtils().getPackageOf(typeElement).toString(), typeElement);
         }
         return false;
     }

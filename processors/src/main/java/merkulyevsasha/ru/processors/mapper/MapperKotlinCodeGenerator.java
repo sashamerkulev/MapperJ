@@ -12,7 +12,7 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator implement
     }
 
     @Override
-    public void generate(TypeElement typeElement, String packageName) {
+    public void generate(String packageName, TypeElement typeElement) {
 
     }
 }

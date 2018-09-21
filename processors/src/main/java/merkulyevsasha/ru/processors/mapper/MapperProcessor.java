@@ -36,7 +36,7 @@ public class MapperProcessor extends AbstractProcessor {
             Mapper mapper = typeElement.getAnnotation(Mapper.class);
 
             CodeGenerator processor = CodeGeneratorFactory.createMapperGenerator(mapper.source(), processingEnv);
-            processor.generate(typeElement, processingEnv.getElementUtils().getPackageOf(typeElement).toString());
+            processor.generate(processingEnv.getElementUtils().getPackageOf(typeElement).toString(), typeElement);
         }
         return false;
     }

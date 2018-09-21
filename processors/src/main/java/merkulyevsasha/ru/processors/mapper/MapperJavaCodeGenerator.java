@@ -17,6 +17,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import merkulyevsasha.ru.annotations.Mapper;
+import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
 
 public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements CodeGenerator {
@@ -25,24 +26,24 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
     }
 
     @Override
-    public void generate(TypeElement typeElement, String packageName) {
+    public void generate(String packageName, TypeElement typeElement) {
         if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Can't find the target directory for generated Kotlin files.");
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
             return;
         }
         try {
             Mapper mapper = typeElement.getAnnotation(Mapper.class);
-            List<TypeMirror> typeOneWayMirrors = getOneWayMapTypeMirrors(mapper);
+            List<TypeMirror> mapOneWayMirrors = getOneWayMapTypeMirrors(mapper);
             List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
 
             additionalMaps.clear();
-            generateClass(packageName, typeElement, convertTypeMirrorsToTypeElements(typeOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors));
+            generateClass(packageName, typeElement, convertTypeMirrorsToTypeElements(mapOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors));
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
         }
     }
 
-    private void generateClass(String packageName, TypeElement typeElement, List<TypeElement> typeOneWayElements, List<TypeElement> typeTwoWayElements) throws IOException {
+    private void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
         String className = typeElement.getSimpleName().toString();
         String builderSimpleClassName = className + "Mapper";
         JavaFileObject builderFile;
@@ -54,7 +55,7 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
             return;
         }
 
-        LinkedHashMap<String, Element> mainElements = getTypeElementFields(typeElement);
+        LinkedHashMap<String, Element> fileds = getTypeElementFields(typeElement);
 
         try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
@@ -70,21 +71,21 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
             out.println();
 
             List<TypeElement> allTypes = new ArrayList<>();
-            allTypes.addAll(typeTwoWayElements);
-            allTypes.addAll(typeOneWayElements);
+            allTypes.addAll(mapTwoWayElements);
+            allTypes.addAll(mapOneWayElements);
 
-            for (TypeElement typeElement2 : allTypes) {
-                LinkedHashMap<String, Element> childElements = getTypeElementFields(typeElement2);
-                String childClassName = typeElement2.getSimpleName().toString();
+            for (TypeElement mapTypeElement : allTypes) {
+                LinkedHashMap<String, Element> fields = getTypeElementFields(mapTypeElement);
+                String mapClassName = mapTypeElement.getSimpleName().toString();
 
-                out.println("    public " + className + " mapTo" + className + "(" + childClassName + " item) {");
-                out.println("        return new " + className + "(" + getConstructorParameter(mainElements, childElements) + ");");
+                out.println("    public " + className + " mapTo" + className + "(" + mapClassName + " item) {");
+                out.println("        return new " + className + "(" + getConstructorParameter(fileds, fields) + ");");
                 out.println("    }");
                 out.println();
 
-                if (typeTwoWayElements.contains(typeElement2)) {
-                    out.println("    public " + childClassName + " mapTo" + childClassName + "(" + className + " item) {");
-                    out.println("        return new " + childClassName + "(" + getConstructorParameter(childElements, mainElements) + ");");
+                if (mapTwoWayElements.contains(mapTypeElement)) {
+                    out.println("    public " + mapClassName + " mapTo" + mapClassName + "(" + className + " item) {");
+                    out.println("        return new " + mapClassName + "(" + getConstructorParameter(fields, fileds) + ");");
                     out.println("    }");
                     out.println();
                 }
@@ -92,24 +93,24 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
 
             for (int i = 0; i < additionalMaps.size(); i++) {
 
-                MapChildInfo map = additionalMaps.get(i);
+                MapChildInfo mapInfo = additionalMaps.get(i);
 
-                LinkedHashMap<String, Element> mapMainElements = getTypeElementFields(map.getMainElement());
-                LinkedHashMap<String, Element> mapChildElements = getTypeElementFields(map.getChildElement());
+                LinkedHashMap<String, Element> mainFields = getTypeElementFields(mapInfo.getMainElement());
+                LinkedHashMap<String, Element> childFields = getTypeElementFields(mapInfo.getChildElement());
 
-                if (map.isListType()) {
-                    out.println("    public List<" + map.getMainName() + "> " + map.getMethodName() + "(List<" + map.getChildName() + "> items) {");
-                    out.println("        List<" + map.getMainName() + "> result = new ArrayList<>();");
-                    out.println("        for (" + map.getChildName() + " item : items) {");
-                    out.println("            result.add(new " + map.getMainName() + "(");
-                    out.println("                    " + getConstructorParameter(mapMainElements, mapChildElements));
+                if (mapInfo.isListType()) {
+                    out.println("    public List<" + mapInfo.getMainName() + "> " + mapInfo.getMethodName() + "(List<" + mapInfo.getChildName() + "> items) {");
+                    out.println("        List<" + mapInfo.getMainName() + "> result = new ArrayList<>();");
+                    out.println("        for (" + mapInfo.getChildName() + " item : items) {");
+                    out.println("            result.add(new " + mapInfo.getMainName() + "(");
+                    out.println("                    " + getConstructorParameter(mainFields, childFields));
                     out.println("            ));");
                     out.println("        }");
                     out.println("        return result;");
                 } else {
-                    out.println("    public " + map.getMainName() + " " + map.getMethodName()+ "(" + map.getChildName() + " item) {");
-                    out.println("        return new " + map.getMainName() + "(");
-                    out.println("                " + getConstructorParameter(mapMainElements, mapChildElements));
+                    out.println("    public " + mapInfo.getMainName() + " " + mapInfo.getMethodName()+ "(" + mapInfo.getChildName() + " item) {");
+                    out.println("        return new " + mapInfo.getMainName() + "(");
+                    out.println("                " + getConstructorParameter(mainFields, childFields));
                     out.println("        );");
                 }
                 out.println("    }");

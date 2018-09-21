@@ -5,13 +5,13 @@ import java.util.LinkedHashMap;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.type.TypeMirror;
 
 import merkulyevsasha.ru.annotations.Source;
 
 public class BaseCodeGenerator {
 
     public final static String KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated";
+    public final static String FOLDER_ERROR_MESSAGE = "Can't find the target directory for generated Kotlin files.";
 
     protected final ProcessingEnvironment processingEnv;
     protected final String generatedSourcesRoot;

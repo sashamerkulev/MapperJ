@@ -22,9 +22,9 @@ public class ArgsJavaCodeGenerator extends BaseCodeGenerator implements CodeGene
     }
 
     @Override
-    public void generate(TypeElement typeElement, String packageName) {
+    public void generate(String packageName, TypeElement typeElement) {
         if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Can't find the target directory for generated Kotlin files.");
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
             return;
         }
 
