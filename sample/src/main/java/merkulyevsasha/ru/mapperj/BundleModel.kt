@@ -1,8 +1,9 @@
 package merkulyevsasha.ru.mapperj
 
 import merkulyevsasha.ru.annotations.ArgsJ
+import merkulyevsasha.ru.annotations.Source
 
-@ArgsJ
+@ArgsJ(source = Source.Kotlin)
 data class BundleModel(
         val id: Int,
         val name: String,
