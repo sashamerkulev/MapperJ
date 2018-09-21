@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.processors;
+package merkulyevsasha.ru.processors.args;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,10 +12,12 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import merkulyevsasha.ru.annotations.Source;
+import merkulyevsasha.ru.processors.BaseCodeGenerator;
+import merkulyevsasha.ru.processors.CodeGenerator;
 
-public class JavaCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
+public class ArgsJavaCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
-    JavaCodeGenerator(ProcessingEnvironment processingEnv) {
+    public ArgsJavaCodeGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
     }
 

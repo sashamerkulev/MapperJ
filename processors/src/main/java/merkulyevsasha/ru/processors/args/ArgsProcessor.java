@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.processors;
+package merkulyevsasha.ru.processors.args;
 
 import com.google.auto.service.AutoService;
 
@@ -16,13 +16,14 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
 import merkulyevsasha.ru.annotations.Args;
+import merkulyevsasha.ru.processors.BaseCodeGenerator;
+import merkulyevsasha.ru.processors.CodeGenerator;
+import merkulyevsasha.ru.processors.CodeGeneratorFactory;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedOptions(ArgsProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+@SupportedOptions(BaseCodeGenerator.KAPT_KOTLIN_GENERATED_OPTION_NAME)
 public class ArgsProcessor extends AbstractProcessor {
-
-    final static String KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated";
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {

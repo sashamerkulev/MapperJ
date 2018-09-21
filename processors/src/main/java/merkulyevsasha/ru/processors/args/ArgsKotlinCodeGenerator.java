@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.processors;
+package merkulyevsasha.ru.processors.args;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -13,10 +13,12 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.annotations.Source;
+import merkulyevsasha.ru.processors.BaseCodeGenerator;
+import merkulyevsasha.ru.processors.CodeGenerator;
 
-public class KotlinCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
+public class ArgsKotlinCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
-    KotlinCodeGenerator(ProcessingEnvironment processingEnv) {
+    public ArgsKotlinCodeGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
     }
 

@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.processors;
+package merkulyevsasha.ru.processors.mapper;
 
 import com.google.auto.service.AutoService;
 
@@ -42,14 +42,16 @@ import javax.lang.model.util.AbstractElementVisitor6;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
+import merkulyevsasha.ru.annotations.Args;
 import merkulyevsasha.ru.annotations.Mapper;
+import merkulyevsasha.ru.processors.BaseCodeGenerator;
+import merkulyevsasha.ru.processors.CodeGenerator;
+import merkulyevsasha.ru.processors.CodeGeneratorFactory;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedOptions(MapperProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+@SupportedOptions(BaseCodeGenerator.KAPT_KOTLIN_GENERATED_OPTION_NAME)
 public class MapperProcessor extends AbstractProcessor {
-
-    final static String KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated";
 
     private final List<MapChildInfo> additionalMaps = new ArrayList<>();
 
@@ -65,6 +67,9 @@ public class MapperProcessor extends AbstractProcessor {
             List<TypeMirror> typeOneWayMirrors = getOneWayMapTypeMirrors(mapper);
             List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
 
+            CodeGenerator processor = CodeGeneratorFactory.createMapperGenerator(mapper.source(), processingEnv);
+            processor.generate(typeElement, processingEnv.getElementUtils().getPackageOf(typeElement).toString());
+
             additionalMaps.clear();
             prepareToGenerateClassFile(typeElement, convertTypeMirrorsToTypeElements(typeOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors), processingEnv.getElementUtils().getPackageOf(typeElement).toString());
         }
@@ -79,11 +84,11 @@ public class MapperProcessor extends AbstractProcessor {
     }
 
     private void prepareToGenerateClassFile(TypeElement typeElement, List<TypeElement> typeOneWayElements, List<TypeElement> typeTwoWayElements, String packageOfMethod) {
-        String generatedSourcesRoot = processingEnv.getOptions().get(KAPT_KOTLIN_GENERATED_OPTION_NAME);
-        if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Can't find the target directory for generated Kotlin files.");
-            return;
-        }
+//        String generatedSourcesRoot = processingEnv.getOptions().get(KAPT_KOTLIN_GENERATED_OPTION_NAME);
+//        if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
+//            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Can't find the target directory for generated Kotlin files.");
+//            return;
+//        }
         try {
             generateClassFile(packageOfMethod, typeElement, typeOneWayElements, typeTwoWayElements);
         } catch (IOException e) {

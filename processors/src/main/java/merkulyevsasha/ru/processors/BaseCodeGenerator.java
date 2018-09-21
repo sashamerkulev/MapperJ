@@ -9,19 +9,19 @@ import javax.lang.model.element.TypeElement;
 
 import merkulyevsasha.ru.annotations.Source;
 
-import static merkulyevsasha.ru.processors.ArgsProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME;
+public class BaseCodeGenerator {
 
-class BaseCodeGenerator {
+    public final static String KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated";
 
-    final ProcessingEnvironment processingEnv;
-    final String generatedSourcesRoot;
+    protected final ProcessingEnvironment processingEnv;
+    protected final String generatedSourcesRoot;
 
-    BaseCodeGenerator(ProcessingEnvironment processingEnv) {
+    public BaseCodeGenerator(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
         generatedSourcesRoot = processingEnv.getOptions().get(KAPT_KOTLIN_GENERATED_OPTION_NAME);
     }
 
-    LinkedHashMap<String, Element> getTypeElementFields(TypeElement type) {
+    protected LinkedHashMap<String, Element> getTypeElementFields(TypeElement type) {
         LinkedHashMap<String, Element> typeElements = new LinkedHashMap<>();
         for (Element element : type.getEnclosedElements()) {
             if (element.getKind() != ElementKind.FIELD) continue;
@@ -30,12 +30,12 @@ class BaseCodeGenerator {
         return typeElements;
     }
 
-    String getFirstUpperFieldTypeName(Element element) {
+    protected String getFirstUpperFieldTypeName(Element element) {
         String typeName = element.asType().toString().toLowerCase().replace("java.lang.", "");
         return typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
     }
 
-    String getCommaDefaultValue(Element element, Source source) {
+    protected String getCommaDefaultValue(Element element, Source source) {
         String typeName = element.asType().toString().toLowerCase();
         switch (typeName) {
             case "int":
