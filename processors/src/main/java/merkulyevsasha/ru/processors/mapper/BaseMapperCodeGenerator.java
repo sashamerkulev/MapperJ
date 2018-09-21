@@ -1,5 +1,6 @@
 package merkulyevsasha.ru.processors.mapper;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,14 +30,36 @@ import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.annotations.Mapper;
 import merkulyevsasha.ru.processors.BaseCodeGenerator;
+import merkulyevsasha.ru.processors.CodeGenerator;
 
-class BaseMapperCodeGenerator extends BaseCodeGenerator {
+abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
     final List<MapChildInfo> additionalMaps = new ArrayList<>();
 
     BaseMapperCodeGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
     }
+
+    @Override
+    public void generate(String packageName, TypeElement typeElement) {
+        if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            Mapper mapper = typeElement.getAnnotation(Mapper.class);
+            List<TypeMirror> mapOneWayMirrors = getOneWayMapTypeMirrors(mapper);
+            List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
+
+            additionalMaps.clear();
+            generateClass(packageName, typeElement, convertTypeMirrorsToTypeElements(mapOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors));
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        }
+    }
+
+    protected abstract void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException;
 
     List<TypeMirror> getOneWayMapTypeMirrors(Mapper mapper) {
         List<TypeMirror> typeMirrors = new ArrayList<>();
@@ -211,4 +234,5 @@ class BaseMapperCodeGenerator extends BaseCodeGenerator {
             }
         }, element);
     }
+
 }

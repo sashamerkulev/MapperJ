@@ -17,7 +17,6 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import merkulyevsasha.ru.annotations.Mapper;
-import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
 
 public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements CodeGenerator {
@@ -27,10 +26,6 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
 
     @Override
     public void generate(String packageName, TypeElement typeElement) {
-        if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
-            return;
-        }
         try {
             Mapper mapper = typeElement.getAnnotation(Mapper.class);
             List<TypeMirror> mapOneWayMirrors = getOneWayMapTypeMirrors(mapper);
@@ -43,7 +38,8 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
         }
     }
 
-    private void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
+    @Override
+    protected void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
         String className = typeElement.getSimpleName().toString();
         String builderSimpleClassName = className + "Mapper";
         JavaFileObject builderFile;
@@ -70,11 +66,11 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
             out.println("public class " + builderSimpleClassName + " {");
             out.println();
 
-            List<TypeElement> allTypes = new ArrayList<>();
-            allTypes.addAll(mapTwoWayElements);
-            allTypes.addAll(mapOneWayElements);
+            List<TypeElement> mapElements = new ArrayList<>();
+            mapElements.addAll(mapTwoWayElements);
+            mapElements.addAll(mapOneWayElements);
 
-            for (TypeElement mapTypeElement : allTypes) {
+            for (TypeElement mapTypeElement : mapElements) {
                 LinkedHashMap<String, Element> fields = getTypeElementFields(mapTypeElement);
                 String mapClassName = mapTypeElement.getSimpleName().toString();
 
@@ -108,7 +104,7 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator implements 
                     out.println("        }");
                     out.println("        return result;");
                 } else {
-                    out.println("    public " + mapInfo.getMainName() + " " + mapInfo.getMethodName()+ "(" + mapInfo.getChildName() + " item) {");
+                    out.println("    public " + mapInfo.getMainName() + " " + mapInfo.getMethodName() + "(" + mapInfo.getChildName() + " item) {");
                     out.println("        return new " + mapInfo.getMainName() + "(");
                     out.println("                " + getConstructorParameter(mainFields, childFields));
                     out.println("        );");

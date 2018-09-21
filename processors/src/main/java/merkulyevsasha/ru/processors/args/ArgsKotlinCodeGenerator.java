@@ -13,35 +13,19 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.annotations.Source;
-import merkulyevsasha.ru.processors.BaseCodeGenerator;
-import merkulyevsasha.ru.processors.CodeGenerator;
 
-public class ArgsKotlinCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
+public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
 
     public ArgsKotlinCodeGenerator(ProcessingEnvironment processingEnv) {
         super(processingEnv);
     }
 
     @Override
-    public void generate(String packageName, TypeElement typeElement) {
-        if (generatedSourcesRoot == null || generatedSourcesRoot.isEmpty()) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            generateClass(packageName, typeElement);
-        } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        }
-    }
-
-    private void generateClass(String packageName, TypeElement typeElement) throws IOException {
+    void generateClass(String packageName, TypeElement typeElement) {
         String className = typeElement.getSimpleName().toString() + "Args";
 
         LinkedHashMap<String, Element> fields = getTypeElementFields(typeElement);
         int size = fields.size() - 1;
-        int count = 0;
 
         try {
             File ktFile = new File(generatedSourcesRoot + File.separator + className + ".kt");
@@ -58,7 +42,7 @@ public class ArgsKotlinCodeGenerator extends BaseCodeGenerator implements CodeGe
                 // class
                 out.println("data class " + className + "(");
                 // primary constructor
-                count = 0;
+                int count = 0;
                 for (Map.Entry<String, Element> entry : fields.entrySet()) {
                     count++;
                     Element field = entry.getValue();
