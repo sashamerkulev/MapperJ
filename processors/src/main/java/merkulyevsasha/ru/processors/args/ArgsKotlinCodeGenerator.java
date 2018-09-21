@@ -12,8 +12,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
-import merkulyevsasha.ru.annotations.Source;
-
 public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
 
     public ArgsKotlinCodeGenerator(ProcessingEnvironment processingEnv) {
@@ -93,7 +91,7 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                     Element field = entry.getValue();
                     String key = field.getSimpleName().toString();
                     out.print("                intent.get" + getFirstUpperFieldTypeName(field) + "Extra(\"" + key + "\""
-                        + getCommaDefaultValue(field, Source.Kotlin) + ")");
+                        + getCommaDefaultValue(field) + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -113,7 +111,7 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                     Element field = entry.getValue();
                     String key = field.getSimpleName().toString();
                     out.print("                bundle.get" + getFirstUpperFieldTypeName(field) + "(\"" + key + "\""
-                        + getCommaDefaultValue(field, Source.Kotlin) + ")");
+                        + getCommaDefaultValue(field) + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -131,4 +129,31 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
         }
     }
+
+    @Override
+    String getCommaDefaultValue(Element element) {
+        String typeName = element.asType().toString().toLowerCase();
+        switch (typeName) {
+            case "int":
+                return ", 0";
+            case "long":
+                return ", 0";
+            case "boolean":
+                return ", false";
+            case "float":
+                return ", 0F";
+            case "double":
+                return ", 0.0";
+            case "short":
+                return ", 0";
+            case "byte":
+                return ", 0";
+            case "java.lang.string":
+                return "";
+            default:
+                return ", null";
+            //throw new IllegalArgumentException(typeName);
+        }
+    }
+
 }
