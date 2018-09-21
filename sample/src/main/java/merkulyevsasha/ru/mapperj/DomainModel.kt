@@ -1,8 +1,8 @@
 package merkulyevsasha.ru.mapperj
 
-import merkulyevsasha.ru.annotations.MapperJ
+import merkulyevsasha.ru.annotations.Mapper
 
-@MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
+@Mapper(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
 data class DomainModel1(
         val id: Int,
         val name: String,

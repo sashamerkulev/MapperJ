@@ -9,7 +9,7 @@ import javax.lang.model.element.TypeElement;
 
 import merkulyevsasha.ru.annotations.Source;
 
-import static merkulyevsasha.ru.processors.ArgsJProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME;
+import static merkulyevsasha.ru.processors.ArgsProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME;
 
 class BaseCodeGenerator {
 

@@ -7,8 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface MapperJ {
+public @interface Args {
     Source source() default Source.Java;
-    Class<?>[] oneWayMapClasses() default {};
-    Class<?>[] twoWayMapClasses() default {};
 }

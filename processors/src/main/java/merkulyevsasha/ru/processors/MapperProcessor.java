@@ -42,12 +42,12 @@ import javax.lang.model.util.AbstractElementVisitor6;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import merkulyevsasha.ru.annotations.MapperJ;
+import merkulyevsasha.ru.annotations.Mapper;
 
 @AutoService(Processor.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedOptions(MapperJProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
-public class MapperJProcessor extends AbstractProcessor {
+@SupportedOptions(MapperProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+public class MapperProcessor extends AbstractProcessor {
 
     final static String KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated";
 
@@ -55,15 +55,15 @@ public class MapperJProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(MapperJ.class);
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(Mapper.class);
 
         for (Element element : elements) {
             if (element.getKind() != ElementKind.CLASS) continue;
             TypeElement typeElement = (TypeElement) element;
 
-            MapperJ mapperJ = typeElement.getAnnotation(MapperJ.class);
-            List<TypeMirror> typeOneWayMirrors = getOneWayMapTypeMirrors(mapperJ);
-            List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapperJ);
+            Mapper mapper = typeElement.getAnnotation(Mapper.class);
+            List<TypeMirror> typeOneWayMirrors = getOneWayMapTypeMirrors(mapper);
+            List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
 
             additionalMaps.clear();
             prepareToGenerateClassFile(typeElement, convertTypeMirrorsToTypeElements(typeOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors), processingEnv.getElementUtils().getPackageOf(typeElement).toString());
@@ -74,7 +74,7 @@ public class MapperJProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> result = new HashSet<>();
-        result.add(MapperJ.class.getCanonicalName());
+        result.add(Mapper.class.getCanonicalName());
         return result;
     }
 
@@ -184,10 +184,10 @@ public class MapperJProcessor extends AbstractProcessor {
         return typeElements;
     }
 
-    private List<TypeMirror> getOneWayMapTypeMirrors(MapperJ mapperJ) {
+    private List<TypeMirror> getOneWayMapTypeMirrors(Mapper mapper) {
         List<TypeMirror> typeMirrors = new ArrayList<>();
         try {
-            for (Class<?> clazz : mapperJ.oneWayMapClasses()) {
+            for (Class<?> clazz : mapper.oneWayMapClasses()) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
             }
         } catch (MirroredTypesException mte) {
@@ -196,10 +196,10 @@ public class MapperJProcessor extends AbstractProcessor {
         return typeMirrors;
     }
 
-    private List<TypeMirror> getTwoWayMapTypeMirrors(MapperJ mapperJ) {
+    private List<TypeMirror> getTwoWayMapTypeMirrors(Mapper mapper) {
         List<TypeMirror> typeMirrors = new ArrayList<>();
         try {
-            for (Class<?> clazz : mapperJ.twoWayMapClasses()) {
+            for (Class<?> clazz : mapper.twoWayMapClasses()) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, clazz.getSimpleName());
             }
         } catch (MirroredTypesException mte) {
