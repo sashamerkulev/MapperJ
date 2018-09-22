@@ -23,7 +23,7 @@ abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGe
         generateClass(packageName, typeElement);
     }
 
-    abstract void generateClass(String packageName, TypeElement typeElement);
+    protected abstract void generateClass(String packageName, TypeElement typeElement);
 
-    abstract String getCommaDefaultValue(Element element);
+    protected abstract String getCommaDefaultValue(Element element);
 }

@@ -65,6 +65,8 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
 
     protected abstract String getDefaultValueForType(TypeMirror typeMirror);
 
+    protected abstract String getGetterByFieldName(String fieldName);
+
     String getConstructorParameter(LinkedHashMap<String, Element> mainElements, LinkedHashMap<String, Element> childElements) {
         StringBuilder sb = new StringBuilder();
 
@@ -122,8 +124,6 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
         }
         return sb.toString();
     }
-
-    abstract protected String getGetterByFieldName(String fieldName);
 
     private String getClassName(String elementTypeName) {
         int lastDot = elementTypeName.lastIndexOf(".");

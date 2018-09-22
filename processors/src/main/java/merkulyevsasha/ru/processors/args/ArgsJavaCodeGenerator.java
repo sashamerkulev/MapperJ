@@ -18,7 +18,7 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    void generateClass(String packageName, TypeElement typeElement) {
+    protected void generateClass(String packageName, TypeElement typeElement) {
         String className = typeElement.getSimpleName().toString() + "Args";
         try {
             JavaFileObject builderFile = processingEnv.getFiler()
@@ -150,7 +150,7 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    String getCommaDefaultValue(Element element) {
+    protected String getCommaDefaultValue(Element element) {
         String typeName = element.asType().toString().toLowerCase();
         switch (typeName) {
             case "int":
