@@ -239,7 +239,7 @@ public class BundleModelArgs {
 
 ### ToDo list
 
-* [ ] Java and Kotlin code generation
+* [x] Java and Kotlin code generation
 * [ ] Ignore for Args
 * [ ] Default values for Args and Mapper
 
