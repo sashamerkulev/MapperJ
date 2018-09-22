@@ -106,7 +106,7 @@ public class DomainModel1Mapper {
 
 # ArgsJ
 
-ArgsJ is an annotation generates you a class helps you to transfer data to Intent or Bundle and back which is comfortable way for transfering arguments to fragments, activities and etc.
+ArgsJ is an annotation generates you a class which helps you to transfer data to Intent or Bundle and back and it is comfortable way for transfering arguments to fragments, activities, services and etc.
 
 ## Usage
 
@@ -237,6 +237,11 @@ public class BundleModelArgs {
 
 ```
 
+### ToDo list
+
+* [ ] Java and Kotlin code generation
+* [ ] Ignore for Args
+* [ ] Default values for Args and Mapper
 
 License
 -------
