@@ -3,8 +3,8 @@ package merkulyevsasha.ru.mapperj
 import merkulyevsasha.ru.annotations.Args
 import merkulyevsasha.ru.annotations.Source
 
-@Args(source = Source.Kotlin)
-data class BundleModel(
+@Args(source = Source.Java)
+data class FragmentArgsModel(
     val id: Int,
     val name: String,
     val shrt: Short,
