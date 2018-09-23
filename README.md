@@ -79,7 +79,7 @@ As you can see I used the following annnotation:
 ```
 
 and there is a generated code which I mentioned before:
-``` kotlin
+``` java
 public class DomainModel1Mapper {
 
     public DomainModel1 mapToDomainModel1(DbEntity item) {
@@ -111,7 +111,7 @@ Args is an annotation generates you a class which helps you to transfer data to 
 ## Usage
 
 ``` kotlin
-@Args
+@Args(source = Source.Kotlin)
 data class BundleModel(
         val id: Int,
         val name: String,
@@ -127,112 +127,72 @@ data class BundleModel(
 This annotation generates the following class:
 
 ``` kotlin
-public class BundleModelArgs {
-
-    private final int id;
-    private final String name;
-    private final short shrt;
-    private final long lng;
-    private final boolean bol;
-    private final byte bte;
-    private final float foat;
-    private final double dbl;
-
-    public BundleModelArgs(int id, String name, short shrt, long lng, boolean bol, byte bte, float foat, double dbl) {
-        this.id = id;
-        this.name = name;
-        this.shrt = shrt;
-        this.lng = lng;
-        this.bol = bol;
-        this.bte = bte;
-        this.foat = foat;
-        this.dbl = dbl;
+data class BundleModelArgs(
+    val id: Int,
+    val name: String,
+    val shrt: Short,
+    val lng: Long,
+    val bol: Boolean,
+    val bte: Byte,
+    val foat: Float,
+    val dbl: Double
+) {
+    fun toIntent(): Intent {
+        val intent = Intent()
+        intent.putExtra("id", id)
+        intent.putExtra("name", name)
+        intent.putExtra("shrt", shrt)
+        intent.putExtra("lng", lng)
+        intent.putExtra("bol", bol)
+        intent.putExtra("bte", bte)
+        intent.putExtra("foat", foat)
+        intent.putExtra("dbl", dbl)
+        return intent
     }
 
-    public int getId() {
-        return id;
+    fun toBundle(): Bundle {
+        val bundle = Bundle()
+        bundle.putInt("id", id)
+        bundle.putString("name", name)
+        bundle.putShort("shrt", shrt)
+        bundle.putLong("lng", lng)
+        bundle.putBoolean("bol", bol)
+        bundle.putByte("bte", bte)
+        bundle.putFloat("foat", foat)
+        bundle.putDouble("dbl", dbl)
+        return bundle
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public short getShrt() {
-        return shrt;
-    }
-
-    public long getLng() {
-        return lng;
-    }
-
-    public boolean getBol() {
-        return bol;
-    }
-
-    public byte getBte() {
-        return bte;
-    }
-
-    public float getFoat() {
-        return foat;
-    }
-
-    public double getDbl() {
-        return dbl;
-    }
-
-    public Intent toIntent() {
-        Intent intent = new Intent();
-        intent.putExtra("id", id);
-        intent.putExtra("name", name);
-        intent.putExtra("shrt", shrt);
-        intent.putExtra("lng", lng);
-        intent.putExtra("bol", bol);
-        intent.putExtra("bte", bte);
-        intent.putExtra("foat", foat);
-        intent.putExtra("dbl", dbl);
-        return intent;
-    }
-
-    public static BundleModelArgs fromIntent(Intent intent) {
-        return new BundleModelArgs(
+    companion object {
+        @JvmStatic
+        fun fromIntent(intent: Intent): BundleModelArgs {
+            return BundleModelArgs(
                 intent.getIntExtra("id", 0),
                 intent.getStringExtra("name"),
-                intent.getShortExtra("shrt", (short) 0),
+                intent.getShortExtra("shrt", 0),
                 intent.getLongExtra("lng", 0),
                 intent.getBooleanExtra("bol", false),
-                intent.getByteExtra("bte", (byte) 0),
+                intent.getByteExtra("bte", 0),
                 intent.getFloatExtra("foat", 0F),
                 intent.getDoubleExtra("dbl", 0.0)
-        );
-    }
+            )
+        }
 
-    public Bundle toBundle() {
-        Bundle bundle = new Bundle();
-        bundle.putInt("id", id);
-        bundle.putString("name", name);
-        bundle.putShort("shrt", shrt);
-        bundle.putLong("lng", lng);
-        bundle.putBoolean("bol", bol);
-        bundle.putByte("bte", bte);
-        bundle.putFloat("foat", foat);
-        bundle.putDouble("dbl", dbl);
-        return bundle;
-    }
-
-    public static BundleModelArgs fromBundle(Bundle bundle) {
-        return new BundleModelArgs(
+        @JvmStatic
+        fun fromBundle(bundle: Bundle): BundleModelArgs {
+            return BundleModelArgs(
                 bundle.getInt("id", 0),
                 bundle.getString("name"),
-                bundle.getShort("shrt", (short) 0),
+                bundle.getShort("shrt", 0),
                 bundle.getLong("lng", 0),
                 bundle.getBoolean("bol", false),
-                bundle.getByte("bte", (byte) 0),
+                bundle.getByte("bte", 0),
                 bundle.getFloat("foat", 0F),
                 bundle.getDouble("dbl", 0.0)
-        );
-    }
+            )
+        }
 
+    }
 }
 
 ```
