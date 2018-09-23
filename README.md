@@ -1,6 +1,6 @@
 
-# MapperJ
-MapperJ is an annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
+# Mapper
+Mapper is an annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
 
 I hope everybody uses Clean Architecture approaches for creating theirs Android projects now.
 Who uses this approaches needs to write boring mapper classes which transfer data between layers such as:
@@ -24,7 +24,7 @@ dependencies {
 ## Usage
 
 ``` kotlin
-@MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
+@Mapper(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
 data class DomainModel1(
         val id: Int,
         val name: String,
@@ -75,7 +75,7 @@ data class ChildResponse(
 ```
 As you can see I used the following annnotation:
 ``` kotlin 
-@MapperJ(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class]) 
+@Mapper(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class]) 
 ```
 
 and there is a generated code which I mentioned before:
@@ -104,14 +104,14 @@ public class DomainModel1Mapper {
 
 ```
 
-# ArgsJ
+# Args
 
-ArgsJ is an annotation generates you a class which helps you to transfer data to Intent or Bundle and back and it is comfortable way for transfering arguments to fragments, activities, services and etc.
+Args is an annotation generates you a class which helps you to transfer data to Intent or Bundle and back and it is comfortable way for transfering arguments to fragments, activities, services and etc.
 
 ## Usage
 
 ``` kotlin
-@ArgsJ
+@Args
 data class BundleModel(
         val id: Int,
         val name: String,
