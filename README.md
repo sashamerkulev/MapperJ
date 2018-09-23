@@ -1,3 +1,4 @@
+[![Android Arsenal]( https://img.shields.io/badge/Android%20Arsenal-MapperJ-green.svg?style=flat )]( https://android-arsenal.com/details/1/7153 )
 
 # MapperJ
 MapperJ is an annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.
