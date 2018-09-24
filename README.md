@@ -16,9 +16,9 @@ So this annotation processing code helps you get rid of such works (different wa
 Add to the `build.gradle` of your app module:
 ```Groovy
 dependencies {
-    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.2'
-    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.2'
-    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.2'
+    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.3'
+    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.3'
+    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.3'
 }
 ```
 
