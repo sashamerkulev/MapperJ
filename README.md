@@ -202,7 +202,8 @@ data class BundleModelArgs(
 
 * [x] Java and Kotlin code generation
 * [x] Ignore for Args
-* [ ] Default values for Args and Mapper
+* [ ] Default values for Args
+* [ ] Default values for Mapper
 
 License
 -------
