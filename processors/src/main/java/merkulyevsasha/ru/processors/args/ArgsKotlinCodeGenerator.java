@@ -9,10 +9,10 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.processors.Field;
+import merkulyevsasha.ru.processors.Values;
 
 public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
 
@@ -21,16 +21,8 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement) {
-        String className = typeElement.getSimpleName().toString() + "Args";
+    protected void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) {
 
-        final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
-        final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
-        for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
-            Field field = entry.getValue();
-            if (field.getIgnoreAnnotation() != null) continue;
-            fields.put(entry.getKey(), field.getElement());
-        }
         int size = fields.size() - 1;
 
         try {
@@ -49,11 +41,12 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                 out.println("data class " + className + "(");
                 // primary constructor
                 int count = 0;
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.print("    val " + key + ": " + getFirstUpperFieldTypeName(field));
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.print("    val " + key + ": " + getFirstUpperFieldTypeName(fieldElement));
                     if (count <= size) {
                         out.print(",");
                     }
@@ -64,9 +57,10 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                 // to Intent
                 out.println("    fun toIntent(): Intent {");
                 out.println("        val intent = Intent()");
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
                     out.println("        intent.putExtra(\"" + key + "\", " + key + ")");
                 }
                 out.println("        return intent");
@@ -76,10 +70,11 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                 // to Bundle
                 out.println("    fun toBundle(): Bundle {");
                 out.println("        val bundle = Bundle()");
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.println("        bundle.put" + getFirstUpperFieldTypeName(field) + "(\"" + key + "\", " + key + ")");
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.println("        bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ")");
                 }
                 out.println("        return bundle");
                 out.println("    }");
@@ -94,12 +89,15 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                 out.println("        fun fromIntent(intent: Intent): " + className + " {");
                 out.println("            return " + className + "(");
                 count = 0;
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.print("                intent.get" + getFirstUpperFieldTypeName(field) + "Extra(\"" + key + "\""
-                        + getCommaDefaultValue(field) + ")");
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    String type = getFirstUpperFieldTypeName(fieldElement);
+                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
+                    out.print("                intent.get" + getFirstUpperFieldTypeName(fieldElement) + "Extra(\"" + key + "\""
+                        + defaultValue + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -114,12 +112,13 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
                 out.println("        fun fromBundle(bundle: Bundle): " + className + " {");
                 out.println("            return " + className + "(");
                 count = 0;
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.print("                bundle.get" + getFirstUpperFieldTypeName(field) + "(\"" + key + "\""
-                        + getCommaDefaultValue(field) + ")");
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.print("                bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
+                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -139,28 +138,28 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected String getCommaDefaultValue(Element element) {
+    protected String getCommaDefaultValue(Element element, Values values) {
         String typeName = element.asType().toString().toLowerCase();
         switch (typeName) {
             case "int":
-                return ", 0";
+                return ", " + values.intValue;
             case "long":
-                return ", 0";
+                return ", " + values.longValue;
             case "boolean":
-                return ", false";
+                return ", " + values.booleanValue;
             case "float":
-                return ", 0F";
+                return ", " + values.floatValue + "F";
             case "double":
-                return ", 0.0";
+                return ", " + values.doubleValue;
             case "short":
-                return ", 0";
+                return ", " + values.shortValue;
             case "byte":
-                return ", 0";
+                return ", " + values.byteValue;
             case "java.lang.string":
-                return "";
+                return values.stringValue.isEmpty() ? "" : ", \"" + values.stringValue + "\"";
             default:
-                return ", null";
-            //throw new IllegalArgumentException(typeName);
+                //return ", null";
+                throw new IllegalArgumentException(typeName);
         }
     }
 

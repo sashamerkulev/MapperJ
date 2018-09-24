@@ -1,5 +1,8 @@
 package merkulyevsasha.ru.processors.args;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -7,6 +10,8 @@ import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
+import merkulyevsasha.ru.processors.Field;
+import merkulyevsasha.ru.processors.Values;
 
 abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
@@ -20,10 +25,19 @@ abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGe
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, BaseCodeGenerator.FOLDER_ERROR_MESSAGE);
             return;
         }
-        generateClass(packageName, typeElement);
+
+        final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
+        final LinkedHashMap<String, Field> fields = new LinkedHashMap<>();
+        for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
+            Field field = entry.getValue();
+            if (field.getIgnoreAnnotation() != null) continue;
+            fields.put(entry.getKey(), field);
+        }
+        elementFields.clear();
+        generateClass(packageName, typeElement.getSimpleName().toString() + "Args", fields);
     }
 
-    protected abstract void generateClass(String packageName, TypeElement typeElement);
+    protected abstract void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields);
 
-    protected abstract String getCommaDefaultValue(Element element);
+    protected abstract String getCommaDefaultValue(Element element, Values values);
 }

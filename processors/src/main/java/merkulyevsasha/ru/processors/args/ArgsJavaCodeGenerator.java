@@ -7,11 +7,11 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import merkulyevsasha.ru.processors.Field;
+import merkulyevsasha.ru.processors.Values;
 
 public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
 
@@ -20,19 +20,10 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement) {
-        String className = typeElement.getSimpleName().toString() + "Args";
+    protected void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) {
         try {
             JavaFileObject builderFile = processingEnv.getFiler()
                 .createSourceFile(className);
-
-            final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
-            final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
-            for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
-                Field field = entry.getValue();
-                if (field.getIgnoreAnnotation() != null) continue;
-                fields.put(entry.getKey(), field.getElement());
-            }
 
             try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
@@ -49,39 +40,43 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 out.println();
 
                 // fields
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.println("    private final " + getFieldTypeName(field) + " " + key + ";");
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.println("    private final " + getFieldTypeName(fieldElement) + " " + key + ";");
                 }
                 out.println();
 
                 // constructor's parameters
                 StringBuilder sb = new StringBuilder();
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
                     if (sb.length() > 0) sb.append(", ");
-                    sb.append(getFieldTypeName(field));
+                    sb.append(getFieldTypeName(fieldElement));
                     sb.append(" ");
                     sb.append(key);
                 }
 
                 // constructor
                 out.println("    public " + className + "(" + sb.toString() + ") {");
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
                     out.println("        this." + key + " = " + key + ";");
                 }
                 out.println("    }");
                 out.println();
 
                 // getters
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.println("    public " + getFieldTypeName(field) + " " + getFieldNameGetter(key) + " {");
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.println("    public " + getFieldTypeName(fieldElement) + " " + getFieldNameGetter(key) + " {");
                     out.println("        return " + key + ";");
                     out.println("    }");
                     out.println();
@@ -90,9 +85,10 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 // to Intent
                 out.println("    public Intent toIntent() {");
                 out.println("        Intent intent = new Intent();");
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
                     out.println("        intent.putExtra(\"" + key + "\", " + key + ");");
                 }
                 out.println("        return intent;");
@@ -104,12 +100,15 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 out.println("        return new " + className + "(");
                 int size = fields.size() - 1;
                 int count = 0;
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.print("                intent.get" + getFirstUpperFieldTypeName(field) + "Extra(\"" + key + "\""
-                        + getCommaDefaultValue(field) + ")");
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    String type = getFirstUpperFieldTypeName(fieldElement);
+                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
+                    out.print("                intent.get" + type + "Extra(\"" + key + "\""
+                        + defaultValue + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -122,10 +121,11 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 // to Bundle
                 out.println("    public Bundle toBundle() {");
                 out.println("        Bundle bundle = new Bundle();");
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.println("        bundle.put" + getFirstUpperFieldTypeName(field) + "(\"" + key + "\", " + key + ");");
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.println("        bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ");");
                 }
                 out.println("        return bundle;");
                 out.println("    }");
@@ -135,12 +135,13 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 out.println("    public static " + className + " fromBundle(Bundle bundle) {");
                 out.println("        return new " + className + "(");
                 count = 0;
-                for (Map.Entry<String, Element> entry : fields.entrySet()) {
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
-                    Element field = entry.getValue();
-                    String key = field.getSimpleName().toString();
-                    out.print("                bundle.get" + getFirstUpperFieldTypeName(field) + "(\"" + key + "\""
-                        + getCommaDefaultValue(field) + ")");
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    out.print("                bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
+                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")");
                     if (count <= size) {
                         out.print(",");
                     }
@@ -158,25 +159,25 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected String getCommaDefaultValue(Element element) {
+    protected String getCommaDefaultValue(Element element, Values values) {
         String typeName = element.asType().toString().toLowerCase();
         switch (typeName) {
             case "int":
-                return ", 0";
+                return ", " + values.intValue;
             case "long":
-                return ", 0";
+                return ", " + values.longValue;
             case "boolean":
-                return ", false";
+                return ", " + values.booleanValue;
             case "float":
-                return ", 0F";
+                return ", " + values.floatValue + "F";
             case "double":
-                return ", 0.0";
+                return ", " + values.doubleValue;
             case "short":
-                return ", (short) 0";
+                return ", (short) " + values.shortValue;
             case "byte":
-                return ", (byte) 0";
+                return ", (byte) " + values.byteValue;
             case "java.lang.string":
-                return "";
+                return values.stringValue.isEmpty() ? "" : ", \"" + values.stringValue + "\"";
             default:
                 return ", null";
             //throw new IllegalArgumentException(typeName);

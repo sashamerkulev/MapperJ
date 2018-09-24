@@ -1,7 +1,7 @@
 package merkulyevsasha.ru.mapperj
 
 import merkulyevsasha.ru.annotations.Mapper
-import merkulyevsasha.ru.annotations.Source
+import merkulyevsasha.ru.annotations.params.Source
 
 @Mapper(source = Source.Kotlin, twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class])
 data class DomainModel1(

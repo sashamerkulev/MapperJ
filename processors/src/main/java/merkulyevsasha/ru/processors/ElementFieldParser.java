@@ -17,8 +17,8 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.type.UnionType;
 import javax.lang.model.type.WildcardType;
-import javax.tools.Diagnostic;
 
+import merkulyevsasha.ru.annotations.DefaultValue;
 import merkulyevsasha.ru.annotations.Ignore;
 
 public class ElementFieldParser {
@@ -29,7 +29,7 @@ public class ElementFieldParser {
             if (element.getKind() != ElementKind.FIELD) continue;
 
             Field.FieldType fieldType;
-            Object listElementType = null;
+            DeclaredType listElementType = null;
             Object objectType = acceptMirrorType(element.asType());
             if (objectType instanceof PrimitiveType || element.asType().toString().contains("String")) {
                 fieldType = Field.FieldType.PrimitiveOrStringType;
@@ -39,16 +39,23 @@ public class ElementFieldParser {
                     fieldType = Field.FieldType.ArrayType;
 
                     TypeMirror arg = declaredType.getTypeArguments().get(0);
-                    listElementType = acceptMirrorType(arg);
+                    listElementType = (DeclaredType)acceptMirrorType(arg);
                 } else {
                     fieldType = Field.FieldType.CustomType;
                 }
             }
 
             Ignore ignore = element.getAnnotation(Ignore.class);
-            typeElements.put(element.toString(), new Field(element, fieldType, listElementType, ignore));
+            DefaultValue defaultValues = element.getAnnotation(DefaultValue.class);
+            Values values = getValues(defaultValues);
+            typeElements.put(element.toString(), new Field(element, fieldType, listElementType, ignore, values));
         }
         return typeElements;
+    }
+
+    private Values getValues(DefaultValue defaultValues) {
+        return defaultValues == null? new Values() : new Values(defaultValues.stringValue(), defaultValues.intValue(), defaultValues.floatValue(),
+            defaultValues.shortValue(), defaultValues.longValue(), defaultValues.doubleValue(), defaultValues.booleanValue(), defaultValues.byteValue());
     }
 
     private Object acceptMirrorType(TypeMirror typeMirror) {
