@@ -201,7 +201,7 @@ data class BundleModelArgs(
 ### ToDo list
 
 * [x] Java and Kotlin code generation
-* [ ] Ignore for Args
+* [x] Ignore for Args
 * [ ] Default values for Args and Mapper
 
 License
