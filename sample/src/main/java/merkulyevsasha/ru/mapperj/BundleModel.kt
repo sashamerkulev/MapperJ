@@ -1,6 +1,7 @@
 package merkulyevsasha.ru.mapperj
 
 import merkulyevsasha.ru.annotations.Args
+import merkulyevsasha.ru.annotations.Ignore
 import merkulyevsasha.ru.annotations.Source
 
 @Args(source = Source.Kotlin)
@@ -12,5 +13,6 @@ data class BundleModel(
     val bol: Boolean,
     val bte: Byte,
     val foat: Float,
-    val dbl: Double
+    val dbl: Double,
+    @Ignore val aaa: String
 )

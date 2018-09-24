@@ -12,6 +12,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
+import merkulyevsasha.ru.processors.Field;
+
 public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
 
     public ArgsKotlinCodeGenerator(ProcessingEnvironment processingEnv) {
@@ -22,7 +24,13 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     protected void generateClass(String packageName, TypeElement typeElement) {
         String className = typeElement.getSimpleName().toString() + "Args";
 
-        LinkedHashMap<String, Element> fields = getTypeElementFields(typeElement);
+        final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
+        final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
+        for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
+            Field field = entry.getValue();
+            if (field.getIgnoreAnnotation() != null) continue;
+            fields.put(entry.getKey(), field.getElement());
+        }
         int size = fields.size() - 1;
 
         try {
