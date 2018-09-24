@@ -28,7 +28,7 @@ publish {
     repoName = 'MapperJ'
     groupId = 'com.github.sashamerkulev'
     artifactId = 'MapperJ-processors'
-    publishVersion = '1.0.1'
+    publishVersion = '1.0.2'
     desc = 'MapperJ is a annotation processing library which helps you get rid of manual creating of mapper classes and it has little bonus.'
     website = 'https://github.com/sashamerkulev/MapperJ'
     dryRun = false
