@@ -11,6 +11,8 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
+import merkulyevsasha.ru.processors.Field;
+
 public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
 
     public ArgsJavaCodeGenerator(ProcessingEnvironment processingEnv) {
@@ -24,7 +26,13 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
             JavaFileObject builderFile = processingEnv.getFiler()
                 .createSourceFile(className);
 
-            LinkedHashMap<String, Element> fields = getTypeElementFields(typeElement);
+            final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
+            final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
+            for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
+                Field field = entry.getValue();
+                if (field.getIgnoreAnnotation() != null) continue;
+                fields.put(entry.getKey(), field.getElement());
+            }
 
             try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
@@ -73,7 +81,7 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 for (Map.Entry<String, Element> entry : fields.entrySet()) {
                     Element field = entry.getValue();
                     String key = field.getSimpleName().toString();
-                    out.println("    public " + getFieldTypeName(field) + " " + getFieldNameGetter(field) + " {");
+                    out.println("    public " + getFieldTypeName(field) + " " + getFieldNameGetter(key) + " {");
                     out.println("        return " + key + ";");
                     out.println("    }");
                     out.println();
@@ -179,8 +187,8 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
         return element.asType().toString().replace("java.lang.", "");
     }
 
-    private String getFieldNameGetter(Element element) {
-        return "get" + getFirstUpperFieldTypeName(element) + "()";
+    private String getFieldNameGetter(String name) {
+        return "get" + getFirstUpperFieldTypeName(name) + "()";
     }
 
 }

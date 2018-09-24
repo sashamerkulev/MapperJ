@@ -13,10 +13,12 @@ public class BaseCodeGenerator {
 
     protected final ProcessingEnvironment processingEnv;
     protected final String generatedSourcesRoot;
+    protected final ElementFieldParser fieldParser;
 
     public BaseCodeGenerator(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
         generatedSourcesRoot = processingEnv.getOptions().get(KAPT_KOTLIN_GENERATED_OPTION_NAME);
+        fieldParser = new ElementFieldParser();
     }
 
     protected LinkedHashMap<String, Element> getTypeElementFields(Element type) {
@@ -30,6 +32,11 @@ public class BaseCodeGenerator {
 
     protected String getFirstUpperFieldTypeName(Element element) {
         String typeName = element.asType().toString().toLowerCase().replace("java.lang.", "");
+        return typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
+    }
+
+    protected String getFirstUpperFieldTypeName(String name) {
+        String typeName = name.toLowerCase().replace("java.lang.", "");
         return typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
     }
 }
