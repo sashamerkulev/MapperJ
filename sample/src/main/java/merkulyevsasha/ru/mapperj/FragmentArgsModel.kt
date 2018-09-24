@@ -1,7 +1,7 @@
 package merkulyevsasha.ru.mapperj
 
 import merkulyevsasha.ru.annotations.Args
-import merkulyevsasha.ru.annotations.Source
+import merkulyevsasha.ru.annotations.params.Source
 
 @Args(source = Source.Java)
 data class FragmentArgsModel(

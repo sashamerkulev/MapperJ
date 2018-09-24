@@ -1,4 +1,4 @@
-package merkulyevsasha.ru.annotations;
+package merkulyevsasha.ru.annotations.params;
 
 public enum Source {
     Java,

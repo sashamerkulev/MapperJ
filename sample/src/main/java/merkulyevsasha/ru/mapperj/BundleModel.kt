@@ -2,7 +2,7 @@ package merkulyevsasha.ru.mapperj
 
 import merkulyevsasha.ru.annotations.Args
 import merkulyevsasha.ru.annotations.Ignore
-import merkulyevsasha.ru.annotations.Source
+import merkulyevsasha.ru.annotations.params.Source
 
 @Args(source = Source.Kotlin)
 data class BundleModel(

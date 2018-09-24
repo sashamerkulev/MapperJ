@@ -2,7 +2,7 @@ package merkulyevsasha.ru.processors;
 
 import javax.annotation.processing.ProcessingEnvironment;
 
-import merkulyevsasha.ru.annotations.Source;
+import merkulyevsasha.ru.annotations.params.Source;
 import merkulyevsasha.ru.processors.args.ArgsJavaCodeGenerator;
 import merkulyevsasha.ru.processors.args.ArgsKotlinCodeGenerator;
 import merkulyevsasha.ru.processors.mapper.MapperJavaCodeGenerator;
