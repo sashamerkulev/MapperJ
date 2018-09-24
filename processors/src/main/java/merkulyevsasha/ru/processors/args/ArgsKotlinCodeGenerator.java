@@ -9,10 +9,7 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-
-import merkulyevsasha.ru.processors.Field;
 
 public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
 
@@ -21,16 +18,8 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement) {
-        String className = typeElement.getSimpleName().toString() + "Args";
+    protected void generateClass(String packageName, String className, LinkedHashMap<String, Element> fields) {
 
-        final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
-        final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
-        for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
-            Field field = entry.getValue();
-            if (field.getIgnoreAnnotation() != null) continue;
-            fields.put(entry.getKey(), field.getElement());
-        }
         int size = fields.size() - 1;
 
         try {

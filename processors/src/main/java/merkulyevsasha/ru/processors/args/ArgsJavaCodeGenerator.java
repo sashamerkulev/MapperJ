@@ -7,11 +7,8 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
-
-import merkulyevsasha.ru.processors.Field;
 
 public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
 
@@ -20,19 +17,10 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement) {
-        String className = typeElement.getSimpleName().toString() + "Args";
+    protected void generateClass(String packageName, String className, LinkedHashMap<String, Element> fields) {
         try {
             JavaFileObject builderFile = processingEnv.getFiler()
                 .createSourceFile(className);
-
-            final LinkedHashMap<String, Field> elementFields = fieldParser.getElementFields(typeElement);
-            final LinkedHashMap<String, Element> fields = new LinkedHashMap<>();
-            for (Map.Entry<String, Field> entry : elementFields.entrySet()) {
-                Field field = entry.getValue();
-                if (field.getIgnoreAnnotation() != null) continue;
-                fields.put(entry.getKey(), field.getElement());
-            }
 
             try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
