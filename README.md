@@ -72,8 +72,8 @@ data class ChildResponse(
         val zz: Byte,
         val ab: Short
 )
-
 ```
+
 As you can see I used the following annnotation:
 ``` kotlin 
 @Mapper(twoWayMapClasses = [DbEntity::class], oneWayMapClasses = [ModelResponse::class]) 
@@ -102,7 +102,6 @@ public class DomainModel1Mapper {
     }
 
 }
-
 ```
 
 # Args
@@ -123,8 +122,8 @@ data class BundleModel(
         val foat: Float,
         val dbl: Double
 )
-
 ```
+
 This annotation generates the following class:
 
 ``` kotlin
@@ -195,14 +194,17 @@ data class BundleModelArgs(
 
     }
 }
-
 ```
+
+# FileSource builders
+It is set of simple classes which can help to generate Java/Kotlin code.
 
 ### ToDo list
 
 * [x] Java and Kotlin code generation
 * [x] Ignore for Args
 * [x] Default values for Args (primitive types and String only)
+* [ ] Use ElementFieldParser and FileSource in Mappers classes
 * [ ] Default values for Mapper
 
 License
