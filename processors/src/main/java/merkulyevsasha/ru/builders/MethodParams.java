@@ -9,18 +9,32 @@ public class MethodParams {
     private final String paramName;
     private final Element element;
     private final Values values;
+    private final String typeName;
 
-    MethodParams(String paramName, Element element, Values values) {
+    private MethodParams(String paramName, Element element, String typeName, Values values) {
         this.paramName = paramName;
         this.element = element;
         this.values = values;
+        this.typeName = typeName;
+    }
+
+    MethodParams(String paramName, Element element, Values values) {
+        this(paramName, element, "", values);
+    }
+
+    MethodParams(String paramName, String typeName) {
+        this(paramName, null, typeName, new Values());
     }
 
     public String getParamName() {
         return paramName;
     }
 
-    public Element getTypeName() {
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public Element getElement() {
         return element;
     }
 

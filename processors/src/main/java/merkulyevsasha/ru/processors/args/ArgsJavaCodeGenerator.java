@@ -41,8 +41,78 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                     constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
                 }
 
+                MethodSpec.Builder toIntent = MethodSpec.methodBuilder("toIntent")
+                    .addReturnType("Intent")
+                    .addStatement("Intent intent = new Intent();");
+
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    toIntent.addStatement("intent.putExtra(\"" + key + "\", " + key + ");");
+                }
+                toIntent.addStatement("return intent;");
+
+                MethodSpec.Builder toBundle = MethodSpec.methodBuilder("toBundle")
+                    .addReturnType("Bundle")
+                    .addStatement("Bundle bundle = new Bundle();");
+
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    toBundle.addStatement("bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ");");
+                }
+                toBundle.addStatement("return bundle;");
+
+                MethodSpec.Builder fromBundle = MethodSpec.methodBuilder("fromBundle")
+                    .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
+                    .addParam("bundle", "Bundle")
+                    .addReturnType(className)
+                    .addStatement("return new " + className + "(");
+
+                int count = 0;
+                int size = fields.size() - 1;
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    count++;
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    String comma = (count <= size) ? "," : "";
+                    fromBundle.addStatement("    bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
+                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")" + comma);
+                }
+                fromBundle.addStatement(");");
+
+                MethodSpec.Builder fromIntent = MethodSpec.methodBuilder("fromIntent")
+                    .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
+                    .addParam("intent", "Intent")
+                    .addReturnType(className)
+                    .addStatement("return new " + className + "(");
+
+                count = 0;
+                for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                    count++;
+                    Field field = entry.getValue();
+                    Element fieldElement = field.getElement();
+                    String key = fieldElement.getSimpleName().toString();
+                    String type = getFirstUpperFieldTypeName(fieldElement);
+                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
+                    String comma = (count <= size) ? "," : "";
+                    fromIntent.addStatement("    intent.get" + type + "Extra(\"" + key + "\""
+                        + defaultValue + ")" + comma);
+                }
+
+                fromIntent.addStatement(");");
+
                 ClassSpec classSpec = ClassSpec.classBuilder(className)
                     .addConstructor(constructorSpecBuilder.build())
+                    .addAccessModifier(ClassSpec.AccessModifier.PUBLIC)
+                    .addInheritanceModifier(ClassSpec.InheritanceModifier.FINAL)
+                    .addMethod(toIntent.build())
+                    .addMethod(toBundle.build())
+                    .addMethod(fromBundle.build())
+                    .addMethod(fromIntent.build())
                     .build();
 
                 FileSource.classFileBuilder(className)
@@ -58,8 +128,7 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
         }
     }
 
-    @Override
-    protected String getCommaDefaultValue(Element element, Values values) {
+    private String getCommaDefaultValue(Element element, Values values) {
         String typeName = element.asType().toString().toLowerCase();
         switch (typeName) {
             case "int":
@@ -83,4 +152,5 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
             //throw new IllegalArgumentException(typeName);
         }
     }
+
 }

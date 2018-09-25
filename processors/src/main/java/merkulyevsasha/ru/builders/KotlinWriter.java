@@ -32,7 +32,7 @@ public class KotlinWriter implements FileSource.SourceWriter {
 
         for (MethodParams methodParams : constructor.getParams()) {
             count++;
-            out.print("    val " + methodParams.getParamName() + ": " + getFirstUpperFieldTypeName(methodParams.getTypeName()));
+            out.print("    val " + methodParams.getParamName() + ": " + getFirstUpperFieldTypeName(methodParams.getElement()));
             if (count <= size) {
                 out.print(",");
             }
@@ -53,7 +53,7 @@ public class KotlinWriter implements FileSource.SourceWriter {
         out.println("    fun toBundle(): Bundle {");
         out.println("        val bundle = Bundle()");
         for (MethodParams methodParams : constructor.getParams()) {
-            out.println("        bundle.put" + getFirstUpperFieldTypeName(methodParams.getTypeName()) + "(\"" + methodParams.getParamName() + "\", " + methodParams.getParamName() + ")");
+            out.println("        bundle.put" + getFirstUpperFieldTypeName(methodParams.getElement()) + "(\"" + methodParams.getParamName() + "\", " + methodParams.getParamName() + ")");
         }
         out.println("        return bundle");
         out.println("    }");
@@ -68,9 +68,9 @@ public class KotlinWriter implements FileSource.SourceWriter {
         count = 0;
         for (MethodParams methodParams : constructor.getParams()) {
             count++;
-            String type = getFirstUpperFieldTypeName(methodParams.getTypeName());
-            String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(methodParams.getTypeName(), methodParams.getValues());
-            out.print("                intent.get" + getFirstUpperFieldTypeName(methodParams.getTypeName()) + "Extra(\"" + methodParams.getParamName() + "\""
+            String type = getFirstUpperFieldTypeName(methodParams.getElement());
+            String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(methodParams.getElement(), methodParams.getValues());
+            out.print("                intent.get" + getFirstUpperFieldTypeName(methodParams.getElement()) + "Extra(\"" + methodParams.getParamName() + "\""
                 + defaultValue + ")");
             if (count <= size) {
                 out.print(",");
@@ -88,8 +88,8 @@ public class KotlinWriter implements FileSource.SourceWriter {
         count = 0;
         for (MethodParams methodParams : constructor.getParams()) {
             count++;
-            out.print("                bundle.get" + getFirstUpperFieldTypeName(methodParams.getTypeName()) + "(\"" + methodParams.getParamName() + "\""
-                + getCommaDefaultValue(methodParams.getTypeName(), methodParams.getValues()) + ")");
+            out.print("                bundle.get" + getFirstUpperFieldTypeName(methodParams.getElement()) + "(\"" + methodParams.getParamName() + "\""
+                + getCommaDefaultValue(methodParams.getElement(), methodParams.getValues()) + ")");
             if (count <= size) {
                 out.print(",");
             }
