@@ -10,6 +10,10 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
+import merkulyevsasha.ru.builders.ClassSpec;
+import merkulyevsasha.ru.builders.FileSource;
+import merkulyevsasha.ru.builders.JavaWriter;
+import merkulyevsasha.ru.builders.MethodSpec;
 import merkulyevsasha.ru.processors.Field;
 import merkulyevsasha.ru.processors.Values;
 
@@ -27,131 +31,27 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
 
             try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
-                if (packageName != null) {
-                    out.println("package " + packageName + ";");
-                }
-                out.println();
-                out.println("import android.content.Intent;");
-                out.println("import android.os.Bundle;");
-                out.println();
+                MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder();
 
-                // class
-                out.println("public class " + className + " {");
-                out.println();
-
-                // fields
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     Field field = entry.getValue();
                     Element fieldElement = field.getElement();
                     String key = fieldElement.getSimpleName().toString();
-                    out.println("    private final " + getFieldTypeName(fieldElement) + " " + key + ";");
-                }
-                out.println();
 
-                // constructor's parameters
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(getFieldTypeName(fieldElement));
-                    sb.append(" ");
-                    sb.append(key);
+                    constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
                 }
 
-                // constructor
-                out.println("    public " + className + "(" + sb.toString() + ") {");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.println("        this." + key + " = " + key + ";");
-                }
-                out.println("    }");
-                out.println();
+                ClassSpec classSpec = ClassSpec.classBuilder(className)
+                    .addConstructor(constructorSpecBuilder.build())
+                    .build();
 
-                // getters
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.println("    public " + getFieldTypeName(fieldElement) + " " + getFieldNameGetter(key) + " {");
-                    out.println("        return " + key + ";");
-                    out.println("    }");
-                    out.println();
-                }
+                FileSource.classFileBuilder(className)
+                    .addPackage(packageName)
+                    .addImport("android.content.Intent")
+                    .addImport("android.os.Bundle")
+                    .addClass(classSpec)
+                    .build().writeTo(out, new JavaWriter());
 
-                // to Intent
-                out.println("    public Intent toIntent() {");
-                out.println("        Intent intent = new Intent();");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.println("        intent.putExtra(\"" + key + "\", " + key + ");");
-                }
-                out.println("        return intent;");
-                out.println("    }");
-                out.println();
-
-                // from Intent
-                out.println("    public static " + className + " fromIntent(Intent intent) {");
-                out.println("        return new " + className + "(");
-                int size = fields.size() - 1;
-                int count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    String type = getFirstUpperFieldTypeName(fieldElement);
-                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
-                    out.print("                intent.get" + type + "Extra(\"" + key + "\""
-                        + defaultValue + ")");
-                    if (count <= size) {
-                        out.print(",");
-                    }
-                    out.println();
-                }
-                out.println("        );");
-                out.println("    }");
-                out.println();
-
-                // to Bundle
-                out.println("    public Bundle toBundle() {");
-                out.println("        Bundle bundle = new Bundle();");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.println("        bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ");");
-                }
-                out.println("        return bundle;");
-                out.println("    }");
-                out.println();
-
-                // from Bundle
-                out.println("    public static " + className + " fromBundle(Bundle bundle) {");
-                out.println("        return new " + className + "(");
-                count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.print("                bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
-                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")");
-                    if (count <= size) {
-                        out.print(",");
-                    }
-                    out.println();
-                }
-                out.println("        );");
-                out.println("    }");
-                out.println();
-
-                out.println("}");
             }
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -183,13 +83,4 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
             //throw new IllegalArgumentException(typeName);
         }
     }
-
-    private String getFieldTypeName(Element element) {
-        return element.asType().toString().replace("java.lang.", "");
-    }
-
-    private String getFieldNameGetter(String name) {
-        return "get" + getFirstUpperFieldTypeName(name) + "()";
-    }
-
 }
