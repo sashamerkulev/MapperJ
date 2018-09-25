@@ -33,6 +33,7 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
 
                 MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder();
 
+                // constructor
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     Field field = entry.getValue();
                     Element fieldElement = field.getElement();
@@ -41,10 +42,10 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                     constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
                 }
 
+                // toIntent
                 MethodSpec.Builder toIntent = MethodSpec.methodBuilder("toIntent")
                     .addReturnType("Intent")
                     .addStatement("Intent intent = new Intent();");
-
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     Field field = entry.getValue();
                     Element fieldElement = field.getElement();
@@ -53,10 +54,10 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 }
                 toIntent.addStatement("return intent;");
 
+                // toBundle
                 MethodSpec.Builder toBundle = MethodSpec.methodBuilder("toBundle")
                     .addReturnType("Bundle")
                     .addStatement("Bundle bundle = new Bundle();");
-
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     Field field = entry.getValue();
                     Element fieldElement = field.getElement();
@@ -65,12 +66,12 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 }
                 toBundle.addStatement("return bundle;");
 
+                // fromBundle
                 MethodSpec.Builder fromBundle = MethodSpec.methodBuilder("fromBundle")
                     .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
                     .addParam("bundle", "Bundle")
                     .addReturnType(className)
                     .addStatement("return new " + className + "(");
-
                 int count = 0;
                 int size = fields.size() - 1;
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
@@ -84,12 +85,12 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                 }
                 fromBundle.addStatement(");");
 
+                // fromIntent
                 MethodSpec.Builder fromIntent = MethodSpec.methodBuilder("fromIntent")
                     .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
                     .addParam("intent", "Intent")
                     .addReturnType(className)
                     .addStatement("return new " + className + "(");
-
                 count = 0;
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     count++;
@@ -102,7 +103,6 @@ public class ArgsJavaCodeGenerator extends BaseArgsCodeGenerator {
                     fromIntent.addStatement("    intent.get" + type + "Extra(\"" + key + "\""
                         + defaultValue + ")" + comma);
                 }
-
                 fromIntent.addStatement(");");
 
                 ClassSpec classSpec = ClassSpec.classBuilder(className)
