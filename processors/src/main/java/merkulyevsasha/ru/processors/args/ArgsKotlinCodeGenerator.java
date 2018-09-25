@@ -11,6 +11,10 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
+import merkulyevsasha.ru.builders.ClassSpec;
+import merkulyevsasha.ru.builders.FileSource;
+import merkulyevsasha.ru.builders.KotlinWriter;
+import merkulyevsasha.ru.builders.MethodSpec;
 import merkulyevsasha.ru.processors.Field;
 import merkulyevsasha.ru.processors.Values;
 
@@ -23,114 +27,30 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     @Override
     protected void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) {
 
-        int size = fields.size() - 1;
-
         try {
             File ktFile = new File(generatedSourcesRoot + File.separator + className + ".kt");
             try (PrintWriter out = new PrintWriter(new FileWriter(ktFile))) {
 
-                if (packageName != null) {
-                    out.println("package " + packageName);
-                }
-                out.println();
-                out.println("import android.content.Intent");
-                out.println("import android.os.Bundle");
-                out.println();
+                MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder();
 
-                // class
-                out.println("data class " + className + "(");
-                // primary constructor
-                int count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.print("    val " + key + ": " + getFirstUpperFieldTypeName(fieldElement));
-                    if (count <= size) {
-                        out.print(",");
-                    }
-                    out.println();
-                }
-                out.println(") {");
-
-                // to Intent
-                out.println("    fun toIntent(): Intent {");
-                out.println("        val intent = Intent()");
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
                     Field field = entry.getValue();
                     Element fieldElement = field.getElement();
                     String key = fieldElement.getSimpleName().toString();
-                    out.println("        intent.putExtra(\"" + key + "\", " + key + ")");
+                    constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
                 }
-                out.println("        return intent");
-                out.println("    }");
-                out.println();
 
-                // to Bundle
-                out.println("    fun toBundle(): Bundle {");
-                out.println("        val bundle = Bundle()");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.println("        bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ")");
-                }
-                out.println("        return bundle");
-                out.println("    }");
-                out.println();
+                ClassSpec classSpec = ClassSpec.classBuilder(className)
+                    .addConstructor(constructorSpecBuilder.build())
+                    .build();
 
-                // companion object
-                out.print("    companion object {");
-                out.print("\n");
+                FileSource.classFileBuilder(className)
+                    .addPackage(packageName)
+                    .addImport("android.content.Intent")
+                    .addImport("android.os.Bundle")
+                    .addClass(classSpec)
+                    .build().writeTo(out, new KotlinWriter());
 
-                // from Intent
-                out.println("        @JvmStatic");
-                out.println("        fun fromIntent(intent: Intent): " + className + " {");
-                out.println("            return " + className + "(");
-                count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    String type = getFirstUpperFieldTypeName(fieldElement);
-                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
-                    out.print("                intent.get" + getFirstUpperFieldTypeName(fieldElement) + "Extra(\"" + key + "\""
-                        + defaultValue + ")");
-                    if (count <= size) {
-                        out.print(",");
-                    }
-                    out.println();
-                }
-                out.println("            )");
-                out.println("        }");
-                out.println();
-
-                // from Bundle
-                out.println("        @JvmStatic");
-                out.println("        fun fromBundle(bundle: Bundle): " + className + " {");
-                out.println("            return " + className + "(");
-                count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    out.print("                bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
-                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")");
-                    if (count <= size) {
-                        out.print(",");
-                    }
-                    out.println();
-                }
-                out.println("            )");
-                out.println("        }");
-                out.println();
-
-                out.println("    }");
-
-                out.println("}");
             }
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
