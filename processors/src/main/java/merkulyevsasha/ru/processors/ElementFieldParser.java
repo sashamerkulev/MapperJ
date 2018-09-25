@@ -4,6 +4,11 @@ import java.util.LinkedHashMap;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
@@ -17,6 +22,7 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.type.UnionType;
 import javax.lang.model.type.WildcardType;
+import javax.lang.model.util.AbstractElementVisitor6;
 
 import merkulyevsasha.ru.annotations.DefaultValue;
 import merkulyevsasha.ru.annotations.Ignore;
@@ -29,7 +35,7 @@ public class ElementFieldParser {
             if (element.getKind() != ElementKind.FIELD) continue;
 
             Field.FieldType fieldType;
-            DeclaredType listElementType = null;
+            DeclaredType elementType = null;
             Object objectType = acceptMirrorType(element.asType());
             if (objectType instanceof PrimitiveType || element.asType().toString().contains("String")) {
                 fieldType = Field.FieldType.PrimitiveOrStringType;
@@ -39,26 +45,22 @@ public class ElementFieldParser {
                     fieldType = Field.FieldType.ArrayType;
 
                     TypeMirror arg = declaredType.getTypeArguments().get(0);
-                    listElementType = (DeclaredType)acceptMirrorType(arg);
+                    elementType = (DeclaredType)acceptMirrorType(arg);
                 } else {
                     fieldType = Field.FieldType.CustomType;
+                    elementType = declaredType;
                 }
             }
 
             Ignore ignore = element.getAnnotation(Ignore.class);
             DefaultValue defaultValues = element.getAnnotation(DefaultValue.class);
             Values values = getValues(defaultValues);
-            typeElements.put(element.toString(), new Field(element, fieldType, listElementType, ignore, values));
+            typeElements.put(element.toString(), new Field(element, fieldType, elementType, ignore, values));
         }
         return typeElements;
     }
 
-    private Values getValues(DefaultValue defaultValues) {
-        return defaultValues == null? new Values() : new Values(defaultValues.stringValue(), defaultValues.intValue(), defaultValues.floatValue(),
-            defaultValues.shortValue(), defaultValues.longValue(), defaultValues.doubleValue(), defaultValues.booleanValue(), defaultValues.byteValue());
-    }
-
-    private Object acceptMirrorType(TypeMirror typeMirror) {
+    public Object acceptMirrorType(TypeMirror typeMirror) {
         return typeMirror.accept(new TypeVisitor<Object, TypeMirror>() {
             @Override
             public Object visit(TypeMirror typeMirror, TypeMirror typeMirror2) {
@@ -132,5 +134,37 @@ public class ElementFieldParser {
         }, typeMirror);
     }
 
+    public Object acceptElement(Element element) {
+        return element.accept(new AbstractElementVisitor6<Object, Element>() {
+            @Override
+            public Object visitPackage(PackageElement packageElement, Element element) {
+                return null;
+            }
 
+            @Override
+            public Object visitType(TypeElement typeElement, Element element) {
+                return typeElement;
+            }
+
+            @Override
+            public Object visitVariable(VariableElement variableElement, Element element) {
+                return variableElement;
+            }
+
+            @Override
+            public Object visitExecutable(ExecutableElement executableElement, Element element) {
+                return null;
+            }
+
+            @Override
+            public Object visitTypeParameter(TypeParameterElement variableElement, Element element) {
+                return null;
+            }
+        }, element);
+    }
+
+    private Values getValues(DefaultValue defaultValues) {
+        return defaultValues == null? new Values() : new Values(defaultValues.stringValue(), defaultValues.intValue(), defaultValues.floatValue(),
+            defaultValues.shortValue(), defaultValues.longValue(), defaultValues.doubleValue(), defaultValues.booleanValue(), defaultValues.byteValue());
+    }
 }

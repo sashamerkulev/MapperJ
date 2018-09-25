@@ -2,15 +2,15 @@ package merkulyevsasha.ru.processors.mapper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
+
+import merkulyevsasha.ru.processors.Field;
 
 public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
 
@@ -19,19 +19,11 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
-        String className = typeElement.getSimpleName().toString();
-        String mapperClassName = className + "Mapper";
-        JavaFileObject builderFile;
-        try {
-            builderFile = processingEnv.getFiler()
-                .createSourceFile(mapperClassName);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+    protected void generateClass(String packageName, String className, String mapperClassName, LinkedHashMap<String, Field> typeElementFields,
+                                 LinkedHashMap<Element, LinkedHashMap<String, Field>> oneWayMapClasses, LinkedHashMap<Element, LinkedHashMap<String, Field>> twoWayMapClasses) throws IOException {
 
-        LinkedHashMap<String, Element> fileds = getTypeElementFields(typeElement);
+        JavaFileObject builderFile = processingEnv.getFiler()
+            .createSourceFile(mapperClassName);
 
         try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
@@ -46,22 +38,22 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
             out.println("public class " + mapperClassName + " {");
             out.println();
 
-            List<TypeElement> mapElements = new ArrayList<>();
-            mapElements.addAll(mapTwoWayElements);
-            mapElements.addAll(mapOneWayElements);
+            LinkedHashMap<Element, LinkedHashMap<String, Field>> mapClasses = new LinkedHashMap<>();
+            mapClasses.putAll(oneWayMapClasses);
+            mapClasses.putAll(twoWayMapClasses);
 
-            for (TypeElement mapTypeElement : mapElements) {
-                LinkedHashMap<String, Element> fields = getTypeElementFields(mapTypeElement);
-                String mapClassName = mapTypeElement.getSimpleName().toString();
+            for (Map.Entry<Element, LinkedHashMap<String, Field>> mapClassElement : mapClasses.entrySet()) {
+                String mapClassName = mapClassElement.getKey().getSimpleName().toString();
+                LinkedHashMap<String, Field> fields = mapClassElement.getValue();
 
                 out.println("    public " + className + " mapTo" + className + "(" + mapClassName + " item) {");
-                out.println("        return new " + className + "(" + getConstructorParameter(fileds, fields) + ");");
+                out.println("        return new " + className + "(" + getConstructorParameter(typeElementFields, fields) + ");");
                 out.println("    }");
                 out.println();
 
-                if (mapTwoWayElements.contains(mapTypeElement)) {
+                if (twoWayMapClasses.keySet().contains(mapClassElement.getKey())) {
                     out.println("    public " + mapClassName + " mapTo" + mapClassName + "(" + className + " item) {");
-                    out.println("        return new " + mapClassName + "(" + getConstructorParameter(fields, fileds) + ");");
+                    out.println("        return new " + mapClassName + "(" + getConstructorParameter(fields, typeElementFields) + ");");
                     out.println("    }");
                     out.println();
                 }
@@ -71,22 +63,22 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
 
                 MapChildInfo mapInfo = additionalMaps.get(i);
 
-                LinkedHashMap<String, Element> mainFields = getTypeElementFields(mapInfo.getMainElement());
-                LinkedHashMap<String, Element> childFields = getTypeElementFields(mapInfo.getChildElement());
+                LinkedHashMap<String, Field> mainFields = fieldParser.getElementFields(mapInfo.getMainElement());
+                LinkedHashMap<String, Field> childFields = fieldParser.getElementFields(mapInfo.getChildElement());
 
                 if (mapInfo.isListType()) {
                     out.println("    public List<" + mapInfo.getMainName() + "> " + mapInfo.getMethodName() + "(List<" + mapInfo.getChildName() + "> items) {");
                     out.println("        List<" + mapInfo.getMainName() + "> result = new ArrayList<>();");
                     out.println("        for (" + mapInfo.getChildName() + " item : items) {");
                     out.println("            result.add(new " + mapInfo.getMainName() + "(");
-                    out.println("                    " + getConstructorParameter(mainFields, childFields));
+                    out.println("                " + getConstructorParameter(mainFields, childFields));
                     out.println("            ));");
                     out.println("        }");
                     out.println("        return result;");
                 } else {
                     out.println("    public " + mapInfo.getMainName() + " " + mapInfo.getMethodName() + "(" + mapInfo.getChildName() + " item) {");
                     out.println("        return new " + mapInfo.getMainName() + "(");
-                    out.println("                " + getConstructorParameter(mainFields, childFields));
+                    out.println("            " + getConstructorParameter(mainFields, childFields));
                     out.println("        );");
                 }
                 out.println("    }");

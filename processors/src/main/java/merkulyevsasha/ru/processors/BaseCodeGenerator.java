@@ -34,9 +34,4 @@ public class BaseCodeGenerator {
         String typeName = element.asType().toString().toLowerCase().replace("java.lang.", "");
         return typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
     }
-
-    protected String getFirstUpperFieldTypeName(String name) {
-        String typeName = name.toLowerCase().replace("java.lang.", "");
-        return typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
-    }
 }
