@@ -70,10 +70,22 @@ public class ClassSpec {
 
         public Builder addMethod(MethodSpec methodSpec) {
             if (methodSpec == null) throw new IllegalArgumentException();
-            if (methodSpec.getInheritanceModifier() == MethodSpec.InheritanceModifier.STATIC){
+            if (methodSpec.getInheritanceModifier() == MethodSpec.InheritanceModifier.STATIC) {
                 staticMethodSpecs.add(methodSpec);
             } else {
                 methodSpecs.add(methodSpec);
+            }
+            return this;
+        }
+
+        public Builder addMethods(List<MethodSpec> methodSpecs) {
+            if (methodSpecs == null) throw new IllegalArgumentException();
+            for (MethodSpec methodSpec : methodSpecs) {
+                if (methodSpec.getInheritanceModifier() == MethodSpec.InheritanceModifier.STATIC) {
+                    this.staticMethodSpecs.add(methodSpec);
+                } else {
+                    this.methodSpecs.add(methodSpec);
+                }
             }
             return this;
         }

@@ -2,7 +2,9 @@ package merkulyevsasha.ru.processors.mapper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -10,6 +12,10 @@ import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
+import merkulyevsasha.ru.builders.ClassSpec;
+import merkulyevsasha.ru.builders.FileSource;
+import merkulyevsasha.ru.builders.JavaWriter;
+import merkulyevsasha.ru.builders.MethodSpec;
 import merkulyevsasha.ru.processors.Field;
 
 public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
@@ -27,16 +33,7 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
 
         try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
 
-            if (packageName != null) {
-                out.println("package " + packageName + ";");
-                out.println();
-            }
-            out.println("import java.util.List;");
-            out.println("import java.util.ArrayList;");
-            out.println();
-
-            out.println("public class " + mapperClassName + " {");
-            out.println();
+            List<MethodSpec> methodSpecs = new ArrayList<>();
 
             LinkedHashMap<Element, LinkedHashMap<String, Field>> mapClasses = new LinkedHashMap<>();
             mapClasses.putAll(oneWayMapClasses);
@@ -46,16 +43,20 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
                 String mapClassName = mapClassElement.getKey().getSimpleName().toString();
                 LinkedHashMap<String, Field> fields = mapClassElement.getValue();
 
-                out.println("    public " + className + " mapTo" + className + "(" + mapClassName + " item) {");
-                out.println("        return new " + className + "(" + getConstructorParameter(typeElementFields, fields) + ");");
-                out.println("    }");
-                out.println();
+                methodSpecs.add(MethodSpec.methodBuilder("mapTo" + className)
+                    .addParam("item", mapClassName)
+                    .addReturnType(className)
+                    .addStatement("return new " + className + "(" + getConstructorParameter(typeElementFields, fields) + ");")
+                    .build()
+                );
 
                 if (twoWayMapClasses.keySet().contains(mapClassElement.getKey())) {
-                    out.println("    public " + mapClassName + " mapTo" + mapClassName + "(" + className + " item) {");
-                    out.println("        return new " + mapClassName + "(" + getConstructorParameter(fields, typeElementFields) + ");");
-                    out.println("    }");
-                    out.println();
+                    methodSpecs.add(MethodSpec.methodBuilder("mapTo" + mapClassName)
+                        .addParam("item", className)
+                        .addReturnType(mapClassName)
+                        .addStatement("return new " + mapClassName + "(" + getConstructorParameter(fields, typeElementFields) + ");")
+                        .build()
+                    );
                 }
             }
 
@@ -67,25 +68,40 @@ public class MapperJavaCodeGenerator extends BaseMapperCodeGenerator {
                 LinkedHashMap<String, Field> childFields = fieldParser.getElementFields(mapInfo.getChildElement());
 
                 if (mapInfo.isListType()) {
-                    out.println("    public List<" + mapInfo.getMainName() + "> " + mapInfo.getMethodName() + "(List<" + mapInfo.getChildName() + "> items) {");
-                    out.println("        List<" + mapInfo.getMainName() + "> result = new ArrayList<>();");
-                    out.println("        for (" + mapInfo.getChildName() + " item : items) {");
-                    out.println("            result.add(new " + mapInfo.getMainName() + "(");
-                    out.println("                " + getConstructorParameter(mainFields, childFields));
-                    out.println("            ));");
-                    out.println("        }");
-                    out.println("        return result;");
+                    methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
+                        .addParam("items", "List<" + mapInfo.getChildName() + ">")
+                        .addReturnType("List<" + mapInfo.getMainName() + ">")
+                        .addStatement("List<" + mapInfo.getMainName() + "> result = new ArrayList<>();")
+                        .addStatement("for (" + mapInfo.getChildName() + " item : items) {")
+                        .addStatement("    result.add(new " + mapInfo.getMainName() + "(")
+                        .addStatement("        " + getConstructorParameter(mainFields, childFields))
+                        .addStatement("    ));")
+                        .addStatement("}")
+                        .addStatement("return result;")
+                        .build()
+                    );
                 } else {
-                    out.println("    public " + mapInfo.getMainName() + " " + mapInfo.getMethodName() + "(" + mapInfo.getChildName() + " item) {");
-                    out.println("        return new " + mapInfo.getMainName() + "(");
-                    out.println("            " + getConstructorParameter(mainFields, childFields));
-                    out.println("        );");
+                    methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
+                        .addParam("item", mapInfo.getChildName())
+                        .addReturnType(mapInfo.getMainName())
+                        .addStatement("return new " + mapInfo.getMainName() + "(" + getConstructorParameter(mainFields, childFields) + ");")
+                        .build()
+                    );
                 }
-                out.println("    }");
-                out.println();
-
             }
-            out.println("}");
+
+            ClassSpec classSpec = ClassSpec.classBuilder(mapperClassName)
+                .addMethods(methodSpecs)
+                .build();
+
+            FileSource.classFileBuilder(mapperClassName)
+                .addPackage(packageName)
+                .addImport("java.util.List")
+                .addImport("java.util.ArrayList")
+                .addClass(classSpec)
+                .build()
+                .writeTo(out, new JavaWriter());
+
         }
     }
 
