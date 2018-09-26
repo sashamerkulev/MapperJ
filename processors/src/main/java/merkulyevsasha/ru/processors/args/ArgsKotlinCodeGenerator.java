@@ -9,7 +9,6 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.builders.ClassSpec;
 import merkulyevsasha.ru.builders.FileSource;
@@ -25,110 +24,105 @@ public class ArgsKotlinCodeGenerator extends BaseArgsCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) {
+    protected void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) throws IOException {
 
-        try {
-            File ktFile = new File(generatedSourcesRoot + File.separator + className + ".kt");
-            try (PrintWriter out = new PrintWriter(new FileWriter(ktFile))) {
+        File ktFile = new File(generatedSourcesRoot + File.separator + className + ".kt");
+        try (PrintWriter out = new PrintWriter(new FileWriter(ktFile))) {
 
-                MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder();
+            MethodSpec.Builder constructorSpecBuilder = MethodSpec.constructorBuilder();
 
-                // constructor
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
-                }
-
-                // toIntent
-                MethodSpec.Builder toIntent = MethodSpec.methodBuilder("toIntent")
-                    .addReturnType("Intent")
-                    .addStatement("val intent = Intent()");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    toIntent.addStatement("intent.putExtra(\"" + key + "\", " + key + ")");
-                }
-                toIntent.addStatement("return intent");
-
-                // toBundle
-                MethodSpec.Builder toBundle = MethodSpec.methodBuilder("toBundle")
-                    .addReturnType("Bundle")
-                    .addStatement("val bundle = Bundle()");
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    toBundle.addStatement("bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ")");
-                }
-                toBundle.addStatement("return bundle");
-
-                // fromBundle
-                MethodSpec.Builder fromBundle = MethodSpec.methodBuilder("fromBundle")
-                    .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
-                    .addParam("bundle", "Bundle")
-                    .addReturnType(className)
-                    .addStatement("return " + className + "(");
-
-                int count = 0;
-                int size = fields.size() - 1;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    String comma = count <= size ? "," : "";
-                    fromBundle.addStatement("    bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
-                        + getCommaDefaultValue(fieldElement, field.getValues()) + ")" + comma);
-                }
-                fromBundle.addStatement(")");
-
-                // fromIntent
-                MethodSpec.Builder fromIntent = MethodSpec.methodBuilder("fromIntent")
-                    .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
-                    .addParam("intent", "Intent")
-                    .addReturnType(className)
-                    .addStatement("return " + className + "(");
-                count = 0;
-                for (Map.Entry<String, Field> entry : fields.entrySet()) {
-                    count++;
-                    Field field = entry.getValue();
-                    Element fieldElement = field.getElement();
-                    String key = fieldElement.getSimpleName().toString();
-                    String type = getFirstUpperFieldTypeName(fieldElement);
-                    String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
-                    String comma = count <= size ? "," : "";
-                    fromIntent.addStatement("    intent.get" + getFirstUpperFieldTypeName(fieldElement) + "Extra(\"" + key + "\""
-                        + defaultValue + ")" + comma);
-                }
-                fromIntent.addStatement(")");
-
-                ClassSpec classSpec = ClassSpec.classBuilder(className)
-                    .addConstructor(constructorSpecBuilder.build())
-                    .addAccessModifier(ClassSpec.AccessModifier.PUBLIC)
-                    .addInheritanceModifier(ClassSpec.InheritanceModifier.DATA)
-                    .addMethod(toIntent.build())
-                    .addMethod(toBundle.build())
-                    .addMethod(fromBundle.build())
-                    .addMethod(fromIntent.build())
-                    .build();
-
-                FileSource.classFileBuilder(className)
-                    .addPackage(packageName)
-                    .addImport("android.content.Intent")
-                    .addImport("android.os.Bundle")
-                    .addClass(classSpec)
-                    .build()
-                    .writeTo(out, new KotlinWriter());
-
+            // constructor
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                Field field = entry.getValue();
+                Element fieldElement = field.getElement();
+                String key = fieldElement.getSimpleName().toString();
+                constructorSpecBuilder.addParam(key, fieldElement, field.getValues());
             }
-        } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+
+            // toIntent
+            MethodSpec.Builder toIntent = MethodSpec.methodBuilder("toIntent")
+                .addReturnType("Intent")
+                .addStatement("val intent = Intent()");
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                Field field = entry.getValue();
+                Element fieldElement = field.getElement();
+                String key = fieldElement.getSimpleName().toString();
+                toIntent.addStatement("intent.putExtra(\"" + key + "\", " + key + ")");
+            }
+            toIntent.addStatement("return intent");
+
+            // toBundle
+            MethodSpec.Builder toBundle = MethodSpec.methodBuilder("toBundle")
+                .addReturnType("Bundle")
+                .addStatement("val bundle = Bundle()");
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                Field field = entry.getValue();
+                Element fieldElement = field.getElement();
+                String key = fieldElement.getSimpleName().toString();
+                toBundle.addStatement("bundle.put" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\", " + key + ")");
+            }
+            toBundle.addStatement("return bundle");
+
+            // fromBundle
+            MethodSpec.Builder fromBundle = MethodSpec.methodBuilder("fromBundle")
+                .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
+                .addParam("bundle", "Bundle")
+                .addReturnType(className)
+                .addStatement("return " + className + "(");
+
+            int count = 0;
+            int size = fields.size() - 1;
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                count++;
+                Field field = entry.getValue();
+                Element fieldElement = field.getElement();
+                String key = fieldElement.getSimpleName().toString();
+                String comma = count <= size ? "," : "";
+                fromBundle.addStatement("    bundle.get" + getFirstUpperFieldTypeName(fieldElement) + "(\"" + key + "\""
+                    + getCommaDefaultValue(fieldElement, field.getValues()) + ")" + comma);
+            }
+            fromBundle.addStatement(")");
+
+            // fromIntent
+            MethodSpec.Builder fromIntent = MethodSpec.methodBuilder("fromIntent")
+                .addInheritanceModifier(MethodSpec.InheritanceModifier.STATIC)
+                .addParam("intent", "Intent")
+                .addReturnType(className)
+                .addStatement("return " + className + "(");
+            count = 0;
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                count++;
+                Field field = entry.getValue();
+                Element fieldElement = field.getElement();
+                String key = fieldElement.getSimpleName().toString();
+                String type = getFirstUpperFieldTypeName(fieldElement);
+                String defaultValue = type.equals("String") ? "" : getCommaDefaultValue(fieldElement, field.getValues());
+                String comma = count <= size ? "," : "";
+                fromIntent.addStatement("    intent.get" + getFirstUpperFieldTypeName(fieldElement) + "Extra(\"" + key + "\""
+                    + defaultValue + ")" + comma);
+            }
+            fromIntent.addStatement(")");
+
+            ClassSpec classSpec = ClassSpec.classBuilder(className)
+                .addConstructor(constructorSpecBuilder.build())
+                .addAccessModifier(ClassSpec.AccessModifier.PUBLIC)
+                .addInheritanceModifier(ClassSpec.InheritanceModifier.DATA)
+                .addMethod(toIntent.build())
+                .addMethod(toBundle.build())
+                .addMethod(fromBundle.build())
+                .addMethod(fromIntent.build())
+                .build();
+
+            FileSource.classFileBuilder(className)
+                .addPackage(packageName)
+                .addImport("android.content.Intent")
+                .addImport("android.os.Bundle")
+                .addClass(classSpec)
+                .build()
+                .writeTo(out, new KotlinWriter());
+
         }
     }
-
 
     private String getCommaDefaultValue(Element element, Values values) {
         String typeName = element.asType().toString().toLowerCase();

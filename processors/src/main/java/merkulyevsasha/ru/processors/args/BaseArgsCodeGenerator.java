@@ -1,5 +1,6 @@
 package merkulyevsasha.ru.processors.args;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,8 +33,12 @@ abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGe
             fields.put(entry.getKey(), field);
         }
         elementFields.clear();
-        generateClass(packageName, typeElement.getSimpleName().toString() + "Args", fields);
+        try {
+            generateClass(packageName, typeElement.getSimpleName().toString() + "Args", fields);
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        }
     }
 
-    protected abstract void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields);
+    protected abstract void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) throws IOException;
 }
