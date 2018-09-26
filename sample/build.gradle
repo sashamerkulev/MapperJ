@@ -22,10 +22,10 @@ android {
 }
 
 dependencies {
-    compileOnly project(path: ':annotations')
-    kapt project(':processors')
+//    compileOnly project(path: ':annotations')
+//    kapt project(':processors')
 
-    implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 
     testImplementation 'junit:junit:4.12'
@@ -34,9 +34,9 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-//    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.3'
-//    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.3'
-//    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.3'
+    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.4'
+    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.4'
+    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.4'
 
 }
 
