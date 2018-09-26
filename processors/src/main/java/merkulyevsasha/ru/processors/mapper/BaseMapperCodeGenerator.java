@@ -8,31 +8,16 @@ import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ErrorType;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.MirroredTypesException;
-import javax.lang.model.type.NoType;
-import javax.lang.model.type.NullType;
-import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.TypeVisitor;
-import javax.lang.model.type.UnionType;
-import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.AbstractElementVisitor6;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.annotations.Mapper;
 import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
+import merkulyevsasha.ru.processors.Field;
 
 abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
@@ -51,59 +36,60 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
 
         try {
             Mapper mapper = typeElement.getAnnotation(Mapper.class);
+
+            String className = typeElement.getSimpleName().toString();
+            String mapperClassName = className + "Mapper";
+            LinkedHashMap<String, Field> typeElementFields = fieldParser.getElementFields(typeElement);
+
             List<TypeMirror> mapOneWayMirrors = getOneWayMapTypeMirrors(mapper);
             List<TypeMirror> typeTwoWayMirrors = getTwoWayMapTypeMirrors(mapper);
 
+            LinkedHashMap<Element, LinkedHashMap<String, Field>> oneWayMapClasses = convertTypeMirrorsToTypeFieldsElements(mapOneWayMirrors);
+            LinkedHashMap<Element, LinkedHashMap<String, Field>> twoWayMapClasses = convertTypeMirrorsToTypeFieldsElements(typeTwoWayMirrors);
+
             additionalMaps.clear();
-            generateClass(packageName, typeElement, convertTypeMirrorsToTypeElements(mapOneWayMirrors), convertTypeMirrorsToTypeElements(typeTwoWayMirrors));
+            generateClass(packageName, className, mapperClassName,
+                typeElementFields, oneWayMapClasses, twoWayMapClasses);
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
         }
     }
 
-    protected abstract void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException;
+    protected abstract void generateClass(String packageName, String className, String mapperClassName, LinkedHashMap<String, Field> typeElementFields,
+                                          LinkedHashMap<Element, LinkedHashMap<String, Field>> oneWayMapClasses, LinkedHashMap<Element, LinkedHashMap<String, Field>> twoWayMapClasses
+    ) throws IOException;
 
     protected abstract String getDefaultValueForType(TypeMirror typeMirror);
 
     protected abstract String getGetterByFieldName(String fieldName);
 
-    String getConstructorParameter(LinkedHashMap<String, Element> mainElements, LinkedHashMap<String, Element> childElements) {
+    String getConstructorParameter(LinkedHashMap<String, Field> mainFields, LinkedHashMap<String, Field> childFields) {
+
         StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Field> entry : mainFields.entrySet()) {
 
-        for (Map.Entry<String, Element> entry : mainElements.entrySet()) {
-
-            Element mainElement = entry.getValue();
-            String key = mainElement.getSimpleName().toString();
+            Field mainField = entry.getValue();
+            String key = mainField.getElement().getSimpleName().toString();
 
             if (sb.length() > 0) sb.append(", ");
 
-            if (childElements.containsKey(key)) {
+            if (childFields.containsKey(key)) {
 
-                Element childElement = childElements.get(key);
+                Field childField = childFields.get(key);
 
-                Object mainElementType = acceptMirrorType(mainElement.asType());
-                Object childElementType = acceptMirrorType(childElement.asType());
-
-                if (mainElementType instanceof PrimitiveType || mainElement.asType().toString().contains("String")) {
-                    sb.append("item.").append(getGetterByFieldName(mainElement.getSimpleName().toString()));
+                if (mainField.getFieldType() == Field.FieldType.PrimitiveOrStringType) {
+                    sb.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
                 } else {
 
-                    DeclaredType mainDeclaredType = (DeclaredType) mainElementType;
-                    DeclaredType childDeclaredType = (DeclaredType) childElementType;
+                    DeclaredType mainDeclaredType = mainField.getElementType();
+                    DeclaredType childDeclaredType = childField.getElementType();
 
                     Boolean isList = false;
-                    String methodName = "mapTo" + getClassName(mainElement.asType().toString());
-                    if (mainDeclaredType.toString().toLowerCase().contains("list")) {
+                    String methodName = "mapTo" + getClassName(mainField.getElement().asType().toString());
+                    if (mainField.getFieldType() == Field.FieldType.ArrayType) {
                         methodName = methodName + "s";
-
-                        TypeMirror mainArg = mainDeclaredType.getTypeArguments().get(0);
-                        TypeMirror childArg = childDeclaredType.getTypeArguments().get(0);
-
-                        Object mainListElementType = acceptMirrorType(mainArg);
-                        Object childListElementType = acceptMirrorType(childArg);
-
-                        mainDeclaredType = (DeclaredType) mainListElementType;
-                        childDeclaredType = (DeclaredType) childListElementType;
+                        mainDeclaredType = mainField.getElementType();
+                        childDeclaredType = childField.getElementType();
                         isList = true;
                     }
 
@@ -111,15 +97,15 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
 
                     additionalMaps.add(new MapChildInfo(
                         mainDeclaredType.asElement(),
-                        getClassName(mainElement.asType().toString()),
+                        getClassName(mainField.getElement().asType().toString()),
                         childDeclaredType.asElement(),
-                        getClassName(childElement.asType().toString()),
+                        getClassName(childField.getElement().asType().toString()),
                         methodName,
                         isList));
                 }
 
             } else {
-                sb.append(getDefaultValueForType(mainElement.asType()));
+                sb.append(getDefaultValueForType(mainField.getElement().asType()));
             }
         }
         return sb.toString();
@@ -130,107 +116,20 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
         return elementTypeName.substring(lastDot + 1).replace(">", "");
     }
 
-    private Object acceptMirrorType(TypeMirror typeMirror) {
-        return typeMirror.accept(new TypeVisitor<Object, TypeMirror>() {
-            @Override
-            public Object visit(TypeMirror typeMirror, TypeMirror typeMirror2) {
-                return typeMirror;
-            }
+    private LinkedHashMap<Element, LinkedHashMap<String, Field>> convertTypeMirrorsToTypeFieldsElements(List<TypeMirror> typeMirrors) {
+        LinkedHashMap<Element, LinkedHashMap<String, Field>> toMapClasses = new LinkedHashMap<>();
+        for (TypeMirror typeMirror : typeMirrors) {
 
-            @Override
-            public Object visit(TypeMirror typeMirror) {
-                return typeMirror;
-            }
+            Object mirrorType = fieldParser.acceptMirrorType(typeMirror);
+            DeclaredType declaredTpe = (DeclaredType) mirrorType;
 
-            @Override
-            public Object visitPrimitive(PrimitiveType primitiveType, TypeMirror typeMirror) {
-                return primitiveType;
-            }
+            Element toMapElement = declaredTpe.asElement();
+            Object toMapAbstractElement = fieldParser.acceptElement(toMapElement);
 
-            @Override
-            public Object visitNull(NullType nullType, TypeMirror typeMirror) {
-                return nullType;
-            }
-
-            @Override
-            public Object visitArray(ArrayType arrayType, TypeMirror typeMirror) {
-                return arrayType;
-            }
-
-            @Override
-            public Object visitDeclared(DeclaredType declaredType, TypeMirror typeMirror) {
-                return declaredType;
-            }
-
-            @Override
-            public Object visitError(ErrorType errorType, TypeMirror typeMirror) {
-                return errorType;
-            }
-
-            @Override
-            public Object visitTypeVariable(TypeVariable typeVariable, TypeMirror typeMirror) {
-                return typeVariable;
-            }
-
-            @Override
-            public Object visitWildcard(WildcardType wildcardType, TypeMirror typeMirror) {
-                return wildcardType;
-            }
-
-            @Override
-            public Object visitExecutable(ExecutableType executableType, TypeMirror typeMirror) {
-                return executableType;
-            }
-
-            @Override
-            public Object visitNoType(NoType noType, TypeMirror typeMirror) {
-                return noType;
-            }
-
-            @Override
-            public Object visitUnknown(TypeMirror typeMirror, TypeMirror typeMirror2) {
-                return typeMirror;
-            }
-
-            @Override
-            public Object visitUnion(UnionType unionType, TypeMirror typeMirror) {
-                return unionType;
-            }
-
-            @Override
-            public Object visitIntersection(IntersectionType intersectionType, TypeMirror typeMirror) {
-                return intersectionType;
-            }
-        }, typeMirror);
-    }
-
-    private Object acceptElement(Element element) {
-        return element.accept(new AbstractElementVisitor6<Object, Element>() {
-            @Override
-            public Object visitPackage(PackageElement packageElement, Element element) {
-                return null;
-            }
-
-            @Override
-            public Object visitType(TypeElement typeElement, Element element) {
-                return typeElement;
-            }
-
-            @Override
-            public Object visitVariable(VariableElement variableElement, Element element) {
-                return variableElement;
-            }
-
-            @Override
-            public Object visitExecutable(ExecutableElement executableElement, Element element) {
-                return null;
-            }
-
-            @Override
-            public Object visitTypeParameter(TypeParameterElement variableElement, Element element) {
-                return null;
-            }
-        }, element);
+            TypeElement toMapClass = (TypeElement) toMapAbstractElement;
+            toMapClasses.put(toMapElement, fieldParser.getElementFields(toMapClass));
+        }
+        return toMapClasses;
     }
 
     private List<TypeMirror> getOneWayMapTypeMirrors(Mapper mapper) {
@@ -256,20 +155,4 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
         }
         return typeMirrors;
     }
-
-    private List<TypeElement> convertTypeMirrorsToTypeElements(List<TypeMirror> typeMirrors) {
-        List<TypeElement> typeElements = new ArrayList<>();
-        for (TypeMirror tm : typeMirrors) {
-            Object mirrorType = acceptMirrorType(tm);
-            DeclaredType declaredTpe = (DeclaredType) mirrorType;
-
-            Element element = declaredTpe.asElement();
-            Object abstractElement = acceptElement(element);
-
-            TypeElement typeElement = (TypeElement) abstractElement;
-            typeElements.add(typeElement);
-        }
-        return typeElements;
-    }
-
 }

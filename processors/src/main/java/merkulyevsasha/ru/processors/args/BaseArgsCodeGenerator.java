@@ -1,17 +1,16 @@
 package merkulyevsasha.ru.processors.args;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
 import merkulyevsasha.ru.processors.Field;
-import merkulyevsasha.ru.processors.Values;
 
 abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGenerator {
 
@@ -34,10 +33,12 @@ abstract class BaseArgsCodeGenerator extends BaseCodeGenerator implements CodeGe
             fields.put(entry.getKey(), field);
         }
         elementFields.clear();
-        generateClass(packageName, typeElement.getSimpleName().toString() + "Args", fields);
+        try {
+            generateClass(packageName, typeElement.getSimpleName().toString() + "Args", fields);
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        }
     }
 
-    protected abstract void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields);
-
-    protected abstract String getCommaDefaultValue(Element element, Values values);
+    protected abstract void generateClass(String packageName, String className, LinkedHashMap<String, Field> fields) throws IOException;
 }

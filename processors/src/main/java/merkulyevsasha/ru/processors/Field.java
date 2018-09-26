@@ -9,15 +9,15 @@ public class Field {
 
     private final Element element;
     private final FieldType fieldType;
-    private final DeclaredType listElementType;
+    private final DeclaredType elementType;
     private final Ignore ignoreAnnotation;
     private final Values values;
 
-    Field(Element element, FieldType fieldType, DeclaredType listElementType,
+    Field(Element element, FieldType fieldType, DeclaredType elementType,
           Ignore ignoreAnnotation, Values values) {
         this.element = element;
         this.fieldType = fieldType;
-        this.listElementType = listElementType;
+        this.elementType = elementType;
         this.ignoreAnnotation = ignoreAnnotation;
         this.values = values;
     }
@@ -30,8 +30,8 @@ public class Field {
         return fieldType;
     }
 
-    public Object getListElementType() {
-        return listElementType;
+    public DeclaredType getElementType() {
+        return elementType;
     }
 
     public Ignore getIgnoreAnnotation() {

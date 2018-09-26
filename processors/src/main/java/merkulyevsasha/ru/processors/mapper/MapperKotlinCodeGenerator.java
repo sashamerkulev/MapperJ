@@ -7,12 +7,17 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic;
+
+import merkulyevsasha.ru.builders.ClassSpec;
+import merkulyevsasha.ru.builders.FileSource;
+import merkulyevsasha.ru.builders.KotlinWriter;
+import merkulyevsasha.ru.builders.MethodSpec;
+import merkulyevsasha.ru.processors.Field;
 
 public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
 
@@ -21,74 +26,76 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
     }
 
     @Override
-    protected void generateClass(String packageName, TypeElement typeElement, List<TypeElement> mapOneWayElements, List<TypeElement> mapTwoWayElements) throws IOException {
-        String className = typeElement.getSimpleName().toString();
-        String mapperClassName = className + "Mapper";
-        LinkedHashMap<String, Element> fileds = getTypeElementFields(typeElement);
+    protected void generateClass(String packageName, String className, String mapperClassName, LinkedHashMap<String, Field> typeElementFields, LinkedHashMap<Element, LinkedHashMap<String, Field>> oneWayMapClasses, LinkedHashMap<Element, LinkedHashMap<String, Field>> twoWayMapClasses) throws IOException {
 
-        try {
-            File ktFile = new File(generatedSourcesRoot + File.separator + mapperClassName + ".kt");
-            try (PrintWriter out = new PrintWriter(new FileWriter(ktFile))) {
+        File ktFile = new File(generatedSourcesRoot + File.separator + mapperClassName + ".kt");
+        try (PrintWriter out = new PrintWriter(new FileWriter(ktFile))) {
 
-                if (packageName != null) {
-                    out.println("package " + packageName);
-                    out.println();
+            List<MethodSpec> methodSpecs = new ArrayList<>();
+
+            LinkedHashMap<Element, LinkedHashMap<String, Field>> mapClasses = new LinkedHashMap<>();
+            mapClasses.putAll(oneWayMapClasses);
+            mapClasses.putAll(twoWayMapClasses);
+
+            for (Map.Entry<Element, LinkedHashMap<String, Field>> mapClassElement : mapClasses.entrySet()) {
+                String mapClassName = mapClassElement.getKey().getSimpleName().toString();
+                LinkedHashMap<String, Field> fields = mapClassElement.getValue();
+                methodSpecs.add(MethodSpec.methodBuilder("mapTo" + className)
+                    .addParam("item", mapClassName)
+                    .addReturnType(className)
+                    .addStatement("return " + className + "(" + getConstructorParameter(typeElementFields, fields) + ")")
+                    .build()
+                );
+
+                if (twoWayMapClasses.keySet().contains(mapClassElement.getKey())) {
+                    methodSpecs.add(MethodSpec.methodBuilder("mapTo" + mapClassName)
+                        .addParam("item", className)
+                        .addReturnType(mapClassName)
+                        .addStatement("return " + mapClassName + "(" + getConstructorParameter(fields, typeElementFields) + ")")
+                        .build()
+                    );
                 }
-
-                out.println("class " + mapperClassName + " {");
-                out.println();
-
-                List<TypeElement> mapElements = new ArrayList<>();
-                mapElements.addAll(mapTwoWayElements);
-                mapElements.addAll(mapOneWayElements);
-
-                for (TypeElement mapTypeElement : mapElements) {
-                    LinkedHashMap<String, Element> fields = getTypeElementFields(mapTypeElement);
-                    String mapClassName = mapTypeElement.getSimpleName().toString();
-
-                    out.println("    fun mapTo" + className + "(item: " + mapClassName + "): " + className + " {");
-                    out.println("        return " + className + "(" + getConstructorParameter(fileds, fields) + ")");
-                    out.println("    }");
-                    out.println();
-
-                    if (mapTwoWayElements.contains(mapTypeElement)) {
-                        out.println("    fun mapTo" + mapClassName + "(item: " + className + "): " + mapClassName + " {");
-                        out.println("        return " + mapClassName + "(" + getConstructorParameter(fields, fileds) + ")");
-                        out.println("    }");
-                        out.println();
-                    }
-                }
-
-                for (int i = 0; i < additionalMaps.size(); i++) {
-
-                    MapChildInfo mapInfo = additionalMaps.get(i);
-
-                    LinkedHashMap<String, Element> mainFields = getTypeElementFields(mapInfo.getMainElement());
-                    LinkedHashMap<String, Element> childFields = getTypeElementFields(mapInfo.getChildElement());
-
-                    if (mapInfo.isListType()) {
-                        out.println("    fun " + mapInfo.getMethodName() + "(items: List<" + mapInfo.getChildName() + ">): List<" + mapInfo.getMainName() + "> {");
-                        out.println("        val result = mutableListOf<" + mapInfo.getMainName() + ">()");
-                        out.println("        for (item in items) {");
-                        out.println("            result.add(" + mapInfo.getMainName() + "(");
-                        out.println("                " + getConstructorParameter(mainFields, childFields));
-                        out.println("            ))");
-                        out.println("        }");
-                        out.println("        return result");
-                    } else {
-                        out.println("    fun " + mapInfo.getMethodName() + "(item: " + mapInfo.getChildName() + "): " + mapInfo.getMainName() + " {");
-                        out.println("        return " + mapInfo.getMainName() + "(");
-                        out.println("            " + getConstructorParameter(mainFields, childFields));
-                        out.println("        )");
-                    }
-                    out.println("    }");
-                    out.println();
-
-                }
-                out.println("}");
             }
-        } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+
+            for (int i = 0; i < additionalMaps.size(); i++) {
+
+                MapChildInfo mapInfo = additionalMaps.get(i);
+
+                LinkedHashMap<String, Field> mainFields = fieldParser.getElementFields(mapInfo.getMainElement());
+                LinkedHashMap<String, Field> childFields = fieldParser.getElementFields(mapInfo.getChildElement());
+
+                if (mapInfo.isListType()) {
+                    methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
+                        .addParam("items", "List<" + mapInfo.getChildName() + ">")
+                        .addReturnType("List<" + mapInfo.getMainName() + ">")
+                        .addStatement("val result = mutableListOf<" + mapInfo.getMainName() + ">()")
+                        .addStatement("for (item in items) {")
+                        .addStatement("    result.add(" + mapInfo.getMainName() + "(")
+                        .addStatement("        " + getConstructorParameter(mainFields, childFields))
+                        .addStatement("    ))")
+                        .addStatement("}")
+                        .addStatement("return result;")
+                        .build()
+                    );
+                } else {
+                    methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
+                        .addParam("item", mapInfo.getChildName())
+                        .addReturnType(mapInfo.getMainName())
+                        .addStatement("return " + mapInfo.getMainName() + "(" + getConstructorParameter(mainFields, childFields) + ")")
+                        .build()
+                    );
+                }
+            }
+
+            ClassSpec classSpec = ClassSpec.classBuilder(mapperClassName)
+                .addMethods(methodSpecs)
+                .build();
+
+            FileSource.classFileBuilder(mapperClassName)
+                .addPackage(packageName)
+                .addClass(classSpec)
+                .build()
+                .writeTo(out, new KotlinWriter());
         }
     }
 
