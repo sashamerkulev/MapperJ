@@ -248,6 +248,7 @@ This library is easier and simpler and less strictly then Java/Kotlin poets :)
 * [x] Ignore for Args
 * [x] Default values for Args (primitive types and String only)
 * [x] Use ElementFieldParser and FileSource in Mappers classes
+* [ ] Map @Nullable to @NonNull (Kotlin only)
 * [ ] Default values for Mapper
 
 License
