@@ -2,6 +2,8 @@ package merkulyevsasha.ru.processors;
 
 import java.util.LinkedHashMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -37,7 +39,7 @@ public class ElementFieldParser {
             Field.FieldType fieldType;
             DeclaredType elementType = null;
             Object objectType = acceptMirrorType(element.asType());
-            if (objectType instanceof PrimitiveType || element.asType().toString().contains("String")) {
+            if (objectType instanceof PrimitiveType || element.asType().toString().contains("String") || element.asType().toString().contains("Date")) {
                 fieldType = Field.FieldType.PrimitiveOrStringType;
             } else {
                 DeclaredType declaredType = (DeclaredType) objectType;
@@ -54,8 +56,16 @@ public class ElementFieldParser {
 
             Ignore ignore = element.getAnnotation(Ignore.class);
             DefaultValue defaultValues = element.getAnnotation(DefaultValue.class);
+
+            Nullable nullable = element.getAnnotation(Nullable.class);
+            Nonnull nonnull = element.getAnnotation(Nonnull.class);
+            org.jetbrains.annotations.NotNull jbNotnull = element.getAnnotation(org.jetbrains.annotations.NotNull.class);
+            org.jetbrains.annotations.Nullable jbNullable = element.getAnnotation(org.jetbrains.annotations.Nullable.class);
+
+            boolean nullableFlag = (nullable != null || jbNullable != null) && jbNotnull == null && nonnull == null;
+
             Values values = getValues(defaultValues);
-            typeElements.put(element.toString(), new Field(element, fieldType, elementType, ignore, values));
+            typeElements.put(element.toString(), new Field(element, fieldType, elementType, ignore, nullableFlag, values));
         }
         return typeElements;
     }

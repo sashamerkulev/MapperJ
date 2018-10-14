@@ -13,6 +13,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 
+import merkulyevsasha.ru.annotations.params.Source;
 import merkulyevsasha.ru.builders.ClassSpec;
 import merkulyevsasha.ru.builders.FileSource;
 import merkulyevsasha.ru.builders.KotlinWriter;
@@ -37,13 +38,19 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
             mapClasses.putAll(oneWayMapClasses);
             mapClasses.putAll(twoWayMapClasses);
 
+            List<String> imports = new ArrayList<>();
+            imports.add("java.util.Date");
+
             for (Map.Entry<Element, LinkedHashMap<String, Field>> mapClassElement : mapClasses.entrySet()) {
                 String mapClassName = mapClassElement.getKey().getSimpleName().toString();
                 LinkedHashMap<String, Field> fields = mapClassElement.getValue();
+
+                imports.add(mapClassElement.getKey().toString());
+
                 methodSpecs.add(MethodSpec.methodBuilder("mapTo" + className)
                     .addParam("item", mapClassName)
                     .addReturnType(className)
-                    .addStatement("return " + className + "(" + getConstructorParameter(typeElementFields, fields) + ")")
+                    .addStatement("return " + className + "(" + getConstructorParameter(Source.Kotlin, typeElementFields, fields) + ")")
                     .build()
                 );
 
@@ -51,7 +58,7 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
                     methodSpecs.add(MethodSpec.methodBuilder("mapTo" + mapClassName)
                         .addParam("item", className)
                         .addReturnType(mapClassName)
-                        .addStatement("return " + mapClassName + "(" + getConstructorParameter(fields, typeElementFields) + ")")
+                        .addStatement("return " + mapClassName + "(" + getConstructorParameter(Source.Kotlin, fields, typeElementFields) + ")")
                         .build()
                     );
                 }
@@ -64,6 +71,8 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
                 LinkedHashMap<String, Field> mainFields = fieldParser.getElementFields(mapInfo.getMainElement());
                 LinkedHashMap<String, Field> childFields = fieldParser.getElementFields(mapInfo.getChildElement());
 
+                imports.add(mapInfo.getChildElement().toString());
+
                 if (mapInfo.isListType()) {
                     methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
                         .addParam("items", "List<" + mapInfo.getChildName() + ">")
@@ -71,7 +80,7 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
                         .addStatement("val result = mutableListOf<" + mapInfo.getMainName() + ">()")
                         .addStatement("for (item in items) {")
                         .addStatement("    result.add(" + mapInfo.getMainName() + "(")
-                        .addStatement("        " + getConstructorParameter(mainFields, childFields))
+                        .addStatement("        " + getConstructorParameter(Source.Kotlin, mainFields, childFields))
                         .addStatement("    ))")
                         .addStatement("}")
                         .addStatement("return result;")
@@ -81,7 +90,7 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
                     methodSpecs.add(MethodSpec.methodBuilder(mapInfo.getMethodName())
                         .addParam("item", mapInfo.getChildName())
                         .addReturnType(mapInfo.getMainName())
-                        .addStatement("return " + mapInfo.getMainName() + "(" + getConstructorParameter(mainFields, childFields) + ")")
+                        .addStatement("return " + mapInfo.getMainName() + "(" + getConstructorParameter(Source.Kotlin, mainFields, childFields) + ")")
                         .build()
                     );
                 }
@@ -93,6 +102,7 @@ public class MapperKotlinCodeGenerator extends BaseMapperCodeGenerator {
 
             FileSource.classFileBuilder(mapperClassName)
                 .addPackage(packageName)
+                .addImports(imports)
                 .addClass(classSpec)
                 .build()
                 .writeTo(out, new KotlinWriter());
