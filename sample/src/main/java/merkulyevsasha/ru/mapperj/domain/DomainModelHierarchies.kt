@@ -1,10 +1,12 @@
-package merkulyevsasha.ru.mapperj
+package merkulyevsasha.ru.mapperj.domain
 
 import merkulyevsasha.ru.annotations.Mapper
 import merkulyevsasha.ru.annotations.params.Source
+import merkulyevsasha.ru.mapperj.entities.DbEntityDeep
+import merkulyevsasha.ru.mapperj.network.ModelResponse
 
 @Mapper(source = Source.Kotlin, twoWayMapClasses = [DbEntityDeep::class], oneWayMapClasses = [ModelResponse::class])
-data class DomainModelHierch2(
+data class DomainModelHierarchies(
     val id: Int,
     val name: String,
     val x: Float,
@@ -18,16 +20,4 @@ data class DomainModelHierch2(
 data class DomainChildDeep(val xyz: String, val childDeep: DomainChildDeepChild)
 
 data class DomainChildDeepChild(val id: Int, val name: String)
-
-data class DbEntityDeep(
-    val id: Int,
-    val name: String,
-    val zz: Byte,
-    val ab: Short,
-    val childrenDeep: List<DbChildDeepEntity>
-)
-
-data class DbChildDeepEntity(val xyz: String, val xz: Long, val childDeep: DomainChildDeepChildEntity)
-
-data class DomainChildDeepChildEntity(val name: String)
 

@@ -44,6 +44,11 @@ public class FileSource {
             return this;
         }
 
+        public ClassFileBuilder addImports(List<String> importPackageNames) {
+            importPackages.addAll(importPackageNames);
+            return this;
+        }
+
         public ClassFileBuilder addPackage(String packageName) {
             if (packageName.isEmpty()) throw new IllegalArgumentException("packageName is empty");
             this.packageName = packageName;

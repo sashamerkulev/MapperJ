@@ -15,6 +15,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 
 import merkulyevsasha.ru.annotations.Mapper;
+import merkulyevsasha.ru.annotations.params.Source;
 import merkulyevsasha.ru.processors.BaseCodeGenerator;
 import merkulyevsasha.ru.processors.CodeGenerator;
 import merkulyevsasha.ru.processors.Field;
@@ -63,7 +64,7 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
 
     protected abstract String getGetterByFieldName(String fieldName);
 
-    String getConstructorParameter(LinkedHashMap<String, Field> mainFields, LinkedHashMap<String, Field> childFields) {
+    String getConstructorParameter(Source source, LinkedHashMap<String, Field> mainFields, LinkedHashMap<String, Field> childFields) {
 
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Field> entry : mainFields.entrySet()) {
@@ -78,7 +79,23 @@ abstract class BaseMapperCodeGenerator extends BaseCodeGenerator implements Code
                 Field childField = childFields.get(key);
 
                 if (mainField.getFieldType() == Field.FieldType.PrimitiveOrStringType) {
-                    sb.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
+                    if (mainField.isNullable() == childField.isNullable() || mainField.isNullable()) {
+                        sb.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
+                    } else {
+                        StringBuilder getter = new StringBuilder();
+                        if (source == Source.Kotlin) {
+                            getter.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
+                            getter.append(" ?: ");
+                            getter.append(getDefaultValueForType(mainField.getElement().asType()));
+                        } else if (source == Source.Java) {
+                            getter.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
+                            getter.append(" == null ? ");
+                            getter.append("item.").append(getGetterByFieldName(mainField.getElement().getSimpleName().toString()));
+                            getter.append(" : ");
+                            getter.append(getDefaultValueForType(mainField.getElement().asType()));
+                        }
+                        sb.append(getter);
+                    }
                 } else {
 
                     DeclaredType mainDeclaredType = mainField.getElementType();

@@ -12,13 +12,15 @@ public class Field {
     private final DeclaredType elementType;
     private final Ignore ignoreAnnotation;
     private final Values values;
+    private final boolean nullable;
 
     Field(Element element, FieldType fieldType, DeclaredType elementType,
-          Ignore ignoreAnnotation, Values values) {
+          Ignore ignoreAnnotation, boolean nullable, Values values) {
         this.element = element;
         this.fieldType = fieldType;
         this.elementType = elementType;
         this.ignoreAnnotation = ignoreAnnotation;
+        this.nullable = nullable;
         this.values = values;
     }
 
@@ -40,6 +42,10 @@ public class Field {
 
     public Values getValues() {
         return values;
+    }
+
+    public boolean isNullable() {
+        return nullable;
     }
 
     public enum FieldType {
