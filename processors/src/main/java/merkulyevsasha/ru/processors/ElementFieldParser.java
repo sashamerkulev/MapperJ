@@ -2,8 +2,8 @@ package merkulyevsasha.ru.processors;
 
 import java.util.LinkedHashMap;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+// import javax.annotation.Nonnull;
+// import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -57,12 +57,13 @@ public class ElementFieldParser {
             Ignore ignore = element.getAnnotation(Ignore.class);
             DefaultValue defaultValues = element.getAnnotation(DefaultValue.class);
 
-            Nullable nullable = element.getAnnotation(Nullable.class);
-            Nonnull nonnull = element.getAnnotation(Nonnull.class);
+//            Nullable nullable = element.getAnnotation(Nullable.class);
+//            Nonnull nonnull = element.getAnnotation(Nonnull.class);
             org.jetbrains.annotations.NotNull jbNotnull = element.getAnnotation(org.jetbrains.annotations.NotNull.class);
             org.jetbrains.annotations.Nullable jbNullable = element.getAnnotation(org.jetbrains.annotations.Nullable.class);
 
-            boolean nullableFlag = (nullable != null || jbNullable != null) && jbNotnull == null && nonnull == null;
+//            boolean nullableFlag = (nullable != null || jbNullable != null) && jbNotnull == null && nonnull == null;
+            boolean nullableFlag = (jbNullable != null) && jbNotnull == null;
 
             Values values = getValues(defaultValues);
             typeElements.put(element.toString(), new Field(element, fieldType, elementType, ignore, nullableFlag, values));

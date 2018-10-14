@@ -16,9 +16,9 @@ So this annotation processing code helps you get rid of such works (different wa
 Add to the `build.gradle` of your app module:
 ```Groovy
 dependencies {
-    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.4'
-    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.4'
-    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.4'
+    implementation 'com.github.sashamerkulev:MapperJ-annotations:1.0.6'
+    kapt 'com.github.sashamerkulev:MapperJ-processors:1.0.6'
+    annotationProcessor 'com.github.sashamerkulev:MapperJ-processors:1.0.6'
 }
 ```
 
@@ -248,7 +248,7 @@ This library is easier and simpler and less strictly then Java/Kotlin poets :)
 * [x] Ignore for Args
 * [x] Default values for Args (primitive types and String only)
 * [x] Use ElementFieldParser and FileSource in Mappers classes
-* [x] Map @Nullable to @NonNull
+* [x] Support mapping org.jetbrains.annotations.Nullable value to org.jetbrains.annotations.NotNull value
 * [ ] Default values for Mapper
 
 License
